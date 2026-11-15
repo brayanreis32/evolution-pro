@@ -4,7 +4,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: { 50: "#eef6fb", 100: "#d5e9f4", 500: "#1f6f9f", 600: "#155a83", 700: "#0f3d5e", 900: "#0a2538" },
+        brand: { 50: "#eef8e8", 100: "#d9f0cc", 500: "#4f7a58", 600: "#3a5a42", 700: "#2b3d2f", 900: "#1b281e" },
+        lime: { DEFAULT: "#7ed957", 600: "#5fbf3a" },
       },
       fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
     },

@@ -11,7 +11,7 @@ export interface Profile {
 export interface Company {
   id: number; name: string; address: string | null; city: string | null; state: string | null; zip: string | null;
   phone: string | null; email: string | null; website: string | null; tax_id: string | null; logo_url: string | null;
-  brand_color: string; timezone: string; currency: string; invoice_prefix: string; next_invoice_number: number;
+  brand_color: string; accent_color: string; tagline: string | null; owner_name: string | null; timezone: string; currency: string; invoice_prefix: string; next_invoice_number: number;
   payment_terms_days: number; invoice_notes: string | null; payment_instructions: string | null; max_gps_accuracy_m: number;
 }
 export interface JobSite {

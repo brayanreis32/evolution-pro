@@ -10,7 +10,8 @@ export function InvoiceDocument({ inv, items, client, company }: { inv: Invoice;
   const d = docT(inv.language);
   const L = inv.language;
   const cur = company.currency;
-  const brand = company.brand_color || "#0f3d5e";
+  const brand = company.brand_color || "#2b3d2f";
+  const accent = company.accent_color || "#7ed957";
   const terms = Math.round((new Date(inv.due_date).getTime() - new Date(inv.issue_date).getTime()) / 86400000);
   const companyLines = [
     company.address,
@@ -27,13 +28,18 @@ export function InvoiceDocument({ inv, items, client, company }: { inv: Invoice;
   return (
     <div className="relative mx-auto flex min-h-[11in] w-[8.5in] flex-col bg-white text-[13px] leading-relaxed text-slate-700 shadow-xl print:min-h-[10in] print:w-full print:shadow-none" style={{ printColorAdjust: "exact", WebkitPrintColorAdjust: "exact" }}>
       <div style={{ height: 10, background: brand }} />
+      <div style={{ height: 4, background: accent }} />
       <div className="flex-1 px-12 pt-10 pb-12 print:px-2">
         {/* cabeçalho */}
         <div className="flex items-start justify-between gap-8">
-          <div className="flex items-start gap-4">
-            {company.logo_url && <img src={company.logo_url} alt="" className="max-h-24 max-w-[180px] object-contain" />}
+          <div>
+            {company.logo_url
+              ? <img src={company.logo_url} alt={company.name} className="mb-3 max-h-28 max-w-[280px] object-contain" />
+              : null}
             <div>
-              <div className="text-xl font-bold text-slate-900">{company.name}</div>
+              <div className={company.logo_url ? "text-sm font-bold text-slate-900" : "text-xl font-bold text-slate-900"}>{company.name}</div>
+              {company.tagline && <div className="text-xs font-medium" style={{ color: brand }}>{company.tagline}</div>}
+              {company.owner_name && <div className="text-slate-500">{company.owner_name}</div>}
               {companyLines.map((l) => <div key={l} className="text-slate-500">{l}</div>)}
               {company.tax_id && <div className="text-slate-500">EIN {company.tax_id}</div>}
             </div>
@@ -96,7 +102,7 @@ export function InvoiceDocument({ inv, items, client, company }: { inv: Invoice;
               <tr><td className="py-1 text-slate-500">{d("subtotal")}</td><td className="py-1 text-right">{money(inv.subtotal, L, cur)}</td></tr>
               {Number(inv.discount) > 0 && <tr><td className="py-1 text-slate-500">{d("discount")}</td><td className="py-1 text-right">−{money(inv.discount, L, cur)}</td></tr>}
               {Number(inv.tax_rate) > 0 && <tr><td className="py-1 text-slate-500">{d("tax")} ({Number(inv.tax_rate)}%)</td><td className="py-1 text-right">{money(inv.tax_amount, L, cur)}</td></tr>}
-              <tr className="border-t-2" style={{ borderColor: brand }}>
+              <tr className="border-t-4" style={{ borderColor: accent }}>
                 <td className="pt-3 text-base font-bold text-slate-900">{inv.status === "paid" ? d("total") : d("balanceDue")}</td>
                 <td className="pt-3 text-right text-xl font-extrabold" style={{ color: brand }}>{money(inv.total, L, cur)}</td>
               </tr>

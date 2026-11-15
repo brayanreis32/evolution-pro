@@ -59,6 +59,8 @@ export default function Settings() {
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t("name")}><input className="input" value={f.name} onChange={set("name")} /></Field>
           <Field label={t("taxId")}><input className="input" value={f.tax_id ?? ""} onChange={set("tax_id")} /></Field>
+          <Field label={t("tagline")} className="sm:col-span-2"><input className="input" value={f.tagline ?? ""} onChange={set("tagline")} /></Field>
+          <Field label={t("ownerName")}><input className="input" value={f.owner_name ?? ""} onChange={set("owner_name")} /></Field>
           <Field label={t("address")} className="sm:col-span-2"><input className="input" value={f.address ?? ""} onChange={set("address")} /></Field>
           <div className="grid grid-cols-3 gap-3 sm:col-span-2">
             <Field label={t("city")}><input className="input" value={f.city ?? ""} onChange={set("city")} /></Field>
@@ -72,6 +74,12 @@ export default function Settings() {
             <div className="flex gap-2">
               <input type="color" className="h-10 w-12 rounded border border-slate-300" value={f.brand_color} onChange={set("brand_color")} />
               <input className="input" value={f.brand_color} onChange={set("brand_color")} />
+            </div>
+          </Field>
+          <Field label={t("accentColor")}>
+            <div className="flex gap-2">
+              <input type="color" className="h-10 w-12 rounded border border-slate-300" value={f.accent_color} onChange={set("accent_color")} />
+              <input className="input" value={f.accent_color} onChange={set("accent_color")} />
             </div>
           </Field>
         </div>

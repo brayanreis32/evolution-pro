@@ -135,7 +135,8 @@ const dict = {
   paymentInstructions: ["Instruções de pagamento (Zelle, cheque, conta…)", "Payment instructions (Zelle, check, bank…)"],
   taxId: ["EIN / Tax ID", "EIN / Tax ID"], website: ["Site", "Website"],
   gpsAccuracy: ["Precisão mínima do GPS (m)", "Minimum GPS accuracy (m)"], invoiceSettings: ["Invoices", "Invoices"],
-  clockSettings: ["Ponto", "Time clock"],
+  clockSettings: ["Ponto", "Time clock"], tagline: ["Slogan / serviços", "Tagline / services"],
+  ownerName: ["Responsável", "Owner / contact"], accentColor: ["Cor de destaque", "Accent color"],
 } as const;
 
 export type DictKey = keyof typeof dict;

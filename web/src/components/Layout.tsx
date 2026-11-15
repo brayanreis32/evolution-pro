@@ -42,11 +42,10 @@ export default function Layout() {
     <div className="min-h-screen sm:flex">
       {/* menu lateral (computador) */}
       <aside className="no-print hidden sm:flex sm:w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
-        <div className="flex items-center gap-3 px-5 py-5">
+        <div className="px-5 py-5">
           {company?.logo_url
-            ? <img src={company.logo_url} alt="" className="h-9 w-9 rounded-lg object-contain" />
-            : <img src="/icon.svg" alt="" className="h-9 w-9" />}
-          <div className="font-semibold leading-tight text-slate-900">{company?.name ?? "Evolution Pro"}</div>
+            ? <img src={company.logo_url} alt={company.name} className="w-full max-h-20 object-contain" />
+            : <div className="font-semibold leading-tight text-slate-900">{company?.name ?? "Evolution Pro"}</div>}
         </div>
         <nav className="flex-1 space-y-0.5 px-3">
           {items.map((i) => (
@@ -70,10 +69,9 @@ export default function Layout() {
 
       {/* topo (celular) */}
       <header className="no-print sm:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="flex items-center gap-2">
-          {company?.logo_url ? <img src={company.logo_url} alt="" className="h-7 w-7 object-contain" /> : <img src="/icon.svg" alt="" className="h-7 w-7" />}
-          <span className="font-semibold">{company?.name ?? "Evolution Pro"}</span>
-        </div>
+        {company?.logo_url
+          ? <img src={company.logo_url} alt={company.name} className="h-10 w-auto max-w-[55%] object-contain" />
+          : <span className="font-semibold">{company?.name ?? "Evolution Pro"}</span>}
         <div className="flex items-center gap-2">
           <LangSwitch />
           <button className="btn-ghost px-2 text-xs" onClick={signOut}>{t("logout")}</button>

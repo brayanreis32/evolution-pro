@@ -23,15 +23,10 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-900 to-brand-600 p-4">
       <form onSubmit={submit} className="card w-full max-w-sm space-y-4 p-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/icon.svg" alt="" className="h-10 w-10" />
-            <div>
-              <div className="text-lg font-semibold text-slate-900">Evolution Pro</div>
-              <div className="text-xs text-slate-500">{t("loginTitle")}</div>
-            </div>
-          </div>
+          <div className="text-sm font-semibold text-slate-500">{t("loginTitle")}</div>
           <LangSwitch />
         </div>
+        <img src="/brand/logo-light.svg" alt="Evolution Pro Carpentry" className="mx-auto w-64" />
         {!supabaseConfigured && <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">{t("notConfigured")}</p>}
         <label className="block">
           <span className="label">{t("email")}</span>
