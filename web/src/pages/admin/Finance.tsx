@@ -142,6 +142,16 @@ export default function Finance() {
     } catch (e) { toast.fail((e as Error).message); } finally { setSyncing(false); }
   };
 
+  const disconnect = async (plaidItemId: string) => {
+    const name = accounts.find((a) => a.plaid_item_id === plaidItemId)?.institution ?? "";
+    if (!confirm(t("confirmDisconnect", { name }))) return;
+    try {
+      const r = await callFunction("plaid-disconnect", { plaid_item_id: plaidItemId });
+      toast.ok(t("disconnected", { n: r.deletedTxns }));
+      load();
+    } catch (e) { toast.fail((e as Error).message); }
+  };
+
   const setCategory = async (id: string, category_id: string) => {
     await supabase.from("transactions").update({ category_id: category_id || null }).eq("id", id);
     setTxns((xs) => xs.map((x) => (x.id === id ? { ...x, category_id: category_id || null } : x)));
@@ -202,7 +212,17 @@ export default function Finance() {
             )}
           </div>
           {accounts.length === 0 && <p className="text-sm text-slate-500">{t("noAccounts")}</p>}
-          {accounts.map((a) => (
+          {[...new Set(accounts.map((a) => a.plaid_item_id ?? "manual"))].map((itemId) => (
+            <div key={itemId} className="space-y-2">
+              {itemId !== "manual" && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold uppercase tracking-wide text-slate-500">
+                    {accounts.find((a) => a.plaid_item_id === itemId)?.institution ?? t("srcPlaid")}
+                  </span>
+                  <button className="font-medium text-red-600 hover:underline" onClick={() => disconnect(itemId)}>{t("disconnect")}</button>
+                </div>
+              )}
+          {accounts.filter((a) => (a.plaid_item_id ?? "manual") === itemId).map((a) => (
             <div key={a.id} className="rounded-lg border border-slate-200 p-3">
               <div className="flex justify-between text-sm">
                 <span className="font-medium">{a.name}{a.mask && <span className="text-slate-400"> ••{a.mask}</span>}</span>
@@ -213,6 +233,8 @@ export default function Finance() {
                 <span>{t("available")}: {money(a.available_balance, lang, a.currency)}</span>
               </div>
               <div className="text-[11px] text-slate-400">{t("lastSync")}: {fmtDateTime(a.updated_at, lang)}</div>
+            </div>
+          ))}
             </div>
           ))}
           <ConnectBank onDone={(m) => { toast.ok(m); load(); }} onError={toast.fail} />

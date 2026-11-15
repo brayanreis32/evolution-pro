@@ -48,7 +48,10 @@ const dict = {
   uncategorized: ["Sem categoria", "Uncategorized"], cashAccount: ["Dinheiro / outra", "Cash / other"],
   lastSync: ["Atualizado", "Updated"], plaidHint: ["A conexão com o banco é feita pelo Plaid, com segurança. O sistema nunca vê sua senha do banco.",
     "Bank connection is handled securely by Plaid. This system never sees your bank password."],
-  exportCsv: ["Exportar CSV", "Export CSV"], newCategory: ["Nova categoria", "New category"],
+  exportCsv: ["Exportar CSV", "Export CSV"], disconnect: ["Desconectar", "Disconnect"],
+  confirmDisconnect: ["Desconectar {name}? O sistema perde o acesso a esse banco e as contas e lançamentos que vieram dele serão apagados. Lançamentos manuais e de invoices continuam.",
+    "Disconnect {name}? The system loses access to this bank and the accounts and transactions imported from it will be deleted. Manual and invoice entries stay."],
+  disconnected: ["Banco desconectado. {n} lançamentos apagados.", "Bank disconnected. {n} transactions deleted."], newCategory: ["Nova categoria", "New category"],
 
   // invoices
   invoice: ["Invoice", "Invoice"], number: ["Nº", "No."], client: ["Cliente", "Client"], issueDate: ["Emissão", "Issue date"],

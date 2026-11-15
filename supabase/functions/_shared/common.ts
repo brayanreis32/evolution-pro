@@ -111,32 +111,40 @@ export async function syncItem(db: SupabaseClient, itemId: string, accessToken: 
   let added = 0, modified = 0, removed = 0;
   while (hasMore) {
     const page = await plaid("/transactions/sync", { access_token: accessToken, cursor: next ?? undefined, count: 500 });
-    for (const t of [...page.added, ...page.modified]) {
-      // Plaid: valor positivo = dinheiro SAINDO da conta
-      const kind = t.amount < 0 ? "income" : "expense";
-      const row: Record<string, unknown> = {
-        plaid_transaction_id: t.transaction_id,
-        account_id: accountMap.get(t.account_id) ?? null,
-        txn_date: t.date,
-        description: t.merchant_name ?? t.name,
-        amount: Math.abs(t.amount),
-        kind,
-        source: "plaid",
-        pending: t.pending,
-      };
-      const { data: existing } = await db.from("transactions").select("id").eq("plaid_transaction_id", t.transaction_id).maybeSingle();
-      if (existing) {
-        await db.from("transactions").update(row).eq("id", existing.id); // mantém a categoria que você escolheu
-      } else {
-        row.category_id = guessCategory(t, kind);
-        await db.from("transactions").insert(row);
-      }
+    const all = [...page.added, ...page.modified];
+    // Plaid: valor positivo = dinheiro SAINDO da conta
+    const toRow = (t: any) => ({
+      plaid_transaction_id: t.transaction_id,
+      account_id: accountMap.get(t.account_id) ?? null,
+      txn_date: t.date,
+      description: t.merchant_name ?? t.name,
+      amount: Math.abs(t.amount),
+      kind: t.amount < 0 ? "income" : "expense",
+      source: "plaid",
+      pending: t.pending,
+    });
+    // quais já existem (em lotes, para não estourar o tamanho da URL)
+    const existing = new Set<string>();
+    const ids = all.map((t: any) => t.transaction_id);
+    for (let i = 0; i < ids.length; i += 200) {
+      const { data } = await db.from("transactions").select("plaid_transaction_id").in("plaid_transaction_id", ids.slice(i, i + 200));
+      (data ?? []).forEach((r: any) => existing.add(r.plaid_transaction_id));
+    }
+    const fresh = all.filter((t: any) => !existing.has(t.transaction_id)).map((t: any) => ({ ...toRow(t), category_id: guessCategory(t, toRow(t).kind) }));
+    const updates = all.filter((t: any) => existing.has(t.transaction_id)).map(toRow); // mantém a categoria escolhida
+    for (let i = 0; i < fresh.length; i += 500) {
+      const { error } = await db.from("transactions").insert(fresh.slice(i, i + 500));
+      if (error) throw new HttpError(500, error.message);
+    }
+    for (let i = 0; i < updates.length; i += 500) {
+      const { error } = await db.from("transactions").upsert(updates.slice(i, i + 500), { onConflict: "plaid_transaction_id" });
+      if (error) throw new HttpError(500, error.message);
     }
     added += page.added.length;
     modified += page.modified.length;
-    const ids = page.removed.map((r: any) => r.transaction_id);
-    if (ids.length) await db.from("transactions").delete().in("plaid_transaction_id", ids);
-    removed += ids.length;
+    const gone = page.removed.map((r: any) => r.transaction_id);
+    if (gone.length) await db.from("transactions").delete().in("plaid_transaction_id", gone);
+    removed += gone.length;
     next = page.next_cursor;
     hasMore = page.has_more;
   }
