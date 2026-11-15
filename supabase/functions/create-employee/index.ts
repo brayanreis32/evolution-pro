@@ -1,9 +1,9 @@
-// Admin cadastra um funcionário: cria o login (email + senha) e o perfil.
+// Admin cadastra um funcionário ou outro administrador: cria o login (email + senha) e o perfil.
 import { handler, json, requireAdmin, serviceClient, HttpError } from "../_shared/common.ts";
 
 Deno.serve(handler(async (req) => {
   await requireAdmin(req);
-  const { email, password, full_name, phone, hourly_rate, language } = await req.json();
+  const { email, password, full_name, phone, hourly_rate, language, role } = await req.json();
   if (!email || !password || !full_name) throw new HttpError(400, "MISSING_FIELDS");
   if (String(password).length < 6) throw new HttpError(400, "WEAK_PASSWORD");
 
@@ -21,7 +21,7 @@ Deno.serve(handler(async (req) => {
     phone: phone ?? null,
     hourly_rate: hourly_rate ?? 0,
     language: language ?? "pt",
-    role: "employee",
+    role: role === "admin" ? "admin" : "employee",
   }).eq("id", data.user.id);
 
   return json({ id: data.user.id });

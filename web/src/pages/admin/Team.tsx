@@ -8,7 +8,7 @@ import { Empty, Field, Modal, PageHeader, useToast } from "../../components/ui";
 
 function NewEmployee({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const { t } = useI18n();
-  const [f, setF] = useState({ full_name: "", email: "", phone: "", password: "", hourly_rate: "", language: "pt" });
+  const [f, setF] = useState({ full_name: "", email: "", phone: "", password: "", hourly_rate: "", language: "pt", role: "employee" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -36,6 +36,12 @@ function NewEmployee({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
             </select>
           </Field>
         </div>
+        <Field label={t("role")}>
+          <select className="input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}>
+            <option value="employee">{t("roleEmployee")}</option>
+            <option value="admin">{t("roleAdmin")}</option>
+          </select>
+        </Field>
         <Field label={t("password")}>
           <input className="input" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} />
           <span className="text-xs text-slate-500">{t("passwordHint")}</span>
