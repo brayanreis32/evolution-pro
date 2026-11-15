@@ -89,7 +89,7 @@ $$;
 -- ---------------------------------------------------------------------
 create table public.company_settings (
   id                   int primary key default 1 check (id = 1),
-  name                 text not null default 'Evolution Pro Carpentry',
+  name                 text not null default 'Evolution Pro Carpentry Inc',
   tagline              text default 'Professional Carpenters · Siding · Decks · Doors and Windows',
   owner_name           text default 'André Bento',
   address              text,
@@ -113,8 +113,9 @@ create table public.company_settings (
   max_gps_accuracy_m   int  not null default 100 check (max_gps_accuracy_m between 10 and 1000),
   updated_at           timestamptz not null default now()
 );
-insert into public.company_settings (id, state, phone, email)
-values (1, 'MA', '(781) 731-2486', 'evolutionprocarpentry@gmail.com');
+insert into public.company_settings (id, name, address, city, state, zip, phone, email)
+values (1, 'Evolution Pro Carpentry Inc', '410 Norfolk St', 'Holliston', 'MA', '01746',
+        '(781) 731-2486', 'evolutionprocarpentry@gmail.com');
 
 create or replace function public.company_tz()
 returns text language sql stable security definer set search_path = public

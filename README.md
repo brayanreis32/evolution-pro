@@ -1,6 +1,6 @@
 # Evolution Pro
 
-Sistema de gestão da **Evolution Pro Carpentry** (André Bento · (781) 731-2486 · evolutionprocarpentry@gmail.com), que funciona no computador e no celular (instala como app):
+Sistema de gestão da **Evolution Pro Carpentry Inc** (410 Norfolk St, Holliston, MA 01746 · André Bento · (781) 731-2486 · evolutionprocarpentry@gmail.com), que funciona no computador e no celular (instala como app):
 
 - **Financeiro:** entradas e saídas, conexão com o banco (Plaid), categorias e exportação para CSV.
 - **Invoices:** profissionais, com a sua logo e numeração automática, e saem em PDF (EN ou PT). Quando você marca um invoice como pago, o valor entra sozinho no Financeiro.
