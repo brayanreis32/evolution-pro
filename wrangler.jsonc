@@ -1,0 +1,10 @@
+// Cloudflare Workers (static assets): publica o app React da pasta web/dist.
+// Rotas como /invoices ou /horas caem no index.html (single-page application).
+{
+  "name": "evolution-pro",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./web/dist",
+    "not_found_handling": "single-page-application"
+  }
+}
