@@ -1,4 +1,4 @@
-export type Role = "admin" | "employee";
+export type Role = "developer" | "admin" | "employee";
 export type PunchType = "clock_in" | "break_start" | "break_end" | "clock_out";
 export type TxnKind = "income" | "expense";
 export type InvoiceStatus = "draft" | "sent" | "paid" | "void";

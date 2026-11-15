@@ -88,6 +88,7 @@ function EditEmployee({ emp, onClose, onSaved }: { emp: Profile; onClose: () => 
           <Field label={t("role")}>
             <select className="input" value={f.role} disabled={isMe} onChange={(e) => setF({ ...f, role: e.target.value as Profile["role"] })}>
               <option value="employee">{t("roleEmployee")}</option><option value="admin">{t("roleAdmin")}</option>
+              {f.role === "developer" && <option value="developer">{t("roleDeveloper")}</option>}
             </select>
           </Field>
         </div>
@@ -134,7 +135,7 @@ export default function Team() {
                   <td className="font-medium">{r.full_name}</td>
                   <td>{r.email}</td>
                   <td>{r.phone}</td>
-                  <td>{r.role === "admin" ? t("roleAdmin") : t("roleEmployee")}</td>
+                  <td>{r.role === "developer" ? t("roleDeveloper") : r.role === "admin" ? t("roleAdmin") : t("roleEmployee")}</td>
                   <td className="text-right">{money(r.hourly_rate, lang, company?.currency)}</td>
                   <td>
                     <span className={`badge ${r.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>

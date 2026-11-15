@@ -71,7 +71,7 @@ const dict = {
   // equipe
   newEmployee: ["Novo funcionário", "New employee"], hourlyRate: ["Valor por hora", "Hourly rate"], role: ["Função", "Role"],
   active: ["Ativo", "Active"], inactiveLabel: ["Inativo", "Inactive"], roleAdmin: ["Administrador", "Admin"],
-  roleEmployee: ["Funcionário", "Employee"], passwordHint: ["Senha inicial (mín. 6). Passe para o funcionário entrar pelo celular.",
+  roleEmployee: ["Funcionário", "Employee"], roleDeveloper: ["Desenvolvedor", "Developer"], passwordHint: ["Senha inicial (mín. 6). Passe para o funcionário entrar pelo celular.",
     "Initial password (min. 6). Give it to the employee to sign in on their phone."],
   deactivate: ["Desativar", "Deactivate"], activate: ["Ativar", "Activate"],
 

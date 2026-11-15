@@ -34,7 +34,7 @@ Pausa e saída precisam ser feitas no mesmo local da entrada.
 2. Em **SQL Editor**, cole e rode o arquivo `supabase/migrations/20261115000000_init.sql`.
    Se preferir, use a CLI: `supabase link` e depois `supabase db push`.
 3. Em **Authentication → Sign In / Providers**, desligue **Allow new users to sign up**. Só você cadastra a equipe.
-4. Em **Authentication → Users → Add user**, crie o **seu** usuário. **O primeiro usuário vira administrador.**
+4. Em **Authentication → Users → Add user**, crie o **seu** usuário. **O primeiro usuário vira desenvolvedor** (acesso total e invisível para os administradores). Os administradores (ex.: André) são cadastrados depois pela tela Equipe.
 
 ### 2. Edge Functions (cadastro de funcionário e Plaid)
 ```bash

@@ -10,6 +10,7 @@ interface AuthState {
   company: Company | null;
   loading: boolean;
   isAdmin: boolean;
+  isDeveloper: boolean;
   reloadCompany: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -55,7 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthState = {
     session, profile, company, loading,
-    isAdmin: profile?.role === "admin" && profile.active,
+    isAdmin: (profile?.role === "admin" || profile?.role === "developer") && Boolean(profile?.active),
+    isDeveloper: profile?.role === "developer" && Boolean(profile?.active),
     reloadCompany,
     signOut: async () => { await supabase.auth.signOut(); },
   };
