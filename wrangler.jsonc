@@ -6,7 +6,6 @@
   "workers_dev": true,
   // Domínio próprio (zona na mesma conta da Cloudflare)
   "routes": [
-    { "pattern": "app.evolutionprocarpentry.com", "custom_domain": true },
     { "pattern": "evolutionprocarpentry.com", "custom_domain": true },
     { "pattern": "www.evolutionprocarpentry.com", "custom_domain": true }
   ],
