@@ -73,7 +73,12 @@ const dict = {
   active: ["Ativo", "Active"], inactiveLabel: ["Inativo", "Inactive"], roleAdmin: ["Administrador", "Admin"],
   roleEmployee: ["Funcionário", "Employee"], roleDeveloper: ["Desenvolvedor", "Developer"], passwordHint: ["Senha inicial (mín. 6). Passe para o funcionário entrar pelo celular.",
     "Initial password (min. 6). Give it to the employee to sign in on their phone."],
-  deactivate: ["Desativar", "Deactivate"], activate: ["Ativar", "Activate"],
+  deactivate: ["Desativar", "Deactivate"],
+  confirmDeleteEmployee: ["Excluir {name}? O login dele será apagado e não dá para desfazer.", "Delete {name}? Their login will be removed and this cannot be undone."],
+  deleted: ["Excluído.", "Deleted."],
+  err_HAS_HISTORY: ["Este funcionário já tem horas registradas, então não pode ser excluído (o histórico de pagamento seria perdido). Desmarque \"Ativo\" para desativar o acesso.",
+    "This employee already has recorded hours, so they can't be deleted (payroll history would be lost). Uncheck \"Active\" to disable their access instead."],
+  err_CANNOT_DELETE_SELF: ["Você não pode excluir o seu próprio usuário.", "You can't delete your own user."], activate: ["Ativar", "Activate"],
 
   // locais
   newSite: ["Novo local", "New job site"], radius: ["Raio permitido (metros)", "Allowed radius (meters)"],

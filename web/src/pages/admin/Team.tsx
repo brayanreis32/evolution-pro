@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { callFunction, supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
-import { useI18n } from "../../lib/i18n";
+import { useErrorText, useI18n } from "../../lib/i18n";
 import { money } from "../../lib/format";
 import type { Profile } from "../../lib/types";
 import { Empty, Field, Modal, PageHeader, useToast } from "../../components/ui";
@@ -56,8 +56,10 @@ function NewEmployee({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
   );
 }
 
-function EditEmployee({ emp, onClose, onSaved }: { emp: Profile; onClose: () => void; onSaved: () => void }) {
+function EditEmployee({ emp, onClose, onSaved, onDeleted }: { emp: Profile; onClose: () => void; onSaved: () => void; onDeleted: () => void }) {
   const { t } = useI18n();
+  const errText = useErrorText();
+  const [busy, setBusy] = useState(false);
   const { profile } = useAuth();
   const [f, setF] = useState(emp);
   const [err, setErr] = useState("");
@@ -69,6 +71,14 @@ function EditEmployee({ emp, onClose, onSaved }: { emp: Profile; onClose: () => 
       role: isMe ? emp.role : f.role, active: isMe ? true : f.active,
     }).eq("id", emp.id);
     if (error) setErr(error.message); else onSaved();
+  };
+
+  const remove = async () => {
+    if (!confirm(t("confirmDeleteEmployee", { name: emp.full_name || emp.email || "" }))) return;
+    setBusy(true); setErr("");
+    try { await callFunction("delete-employee", { id: emp.id }); onDeleted(); }
+    catch (e) { setErr(errText(e)); }
+    finally { setBusy(false); }
   };
 
   return (
@@ -98,9 +108,12 @@ function EditEmployee({ emp, onClose, onSaved }: { emp: Profile; onClose: () => 
           </label>
         )}
         {err && <p className="text-sm text-red-600">{err}</p>}
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-between gap-2">
+          {!isMe ? <button className="btn-ghost text-red-600" onClick={remove} disabled={busy}>{t("delete")}</button> : <span />}
+          <div className="flex gap-2">
           <button className="btn-secondary" onClick={onClose}>{t("cancel")}</button>
           <button className="btn-primary" onClick={save}>{t("save")}</button>
+          </div>
         </div>
       </div>
     </Modal>
@@ -150,7 +163,7 @@ export default function Team() {
         )}
       </div>
       {creating && <NewEmployee onClose={() => setCreating(false)} onSaved={() => { setCreating(false); toast.ok(t("saved")); load(); }} />}
-      {editing && <EditEmployee emp={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast.ok(t("saved")); load(); }} />}
+      {editing && <EditEmployee emp={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast.ok(t("saved")); load(); }} onDeleted={() => { setEditing(null); toast.ok(t("deleted")); load(); }} />}
     </div>
   );
 }
