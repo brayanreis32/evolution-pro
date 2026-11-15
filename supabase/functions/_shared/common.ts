@@ -57,6 +57,7 @@ export function handler(fn: (req: Request) => Promise<Response>) {
 const PLAID_ENV = Deno.env.get("PLAID_ENV") ?? "sandbox"; // sandbox | production
 
 export async function plaid<T = any>(path: string, body: Record<string, unknown>): Promise<T> {
+  if (!Deno.env.get("PLAID_CLIENT_ID") || !Deno.env.get("PLAID_SECRET")) throw new HttpError(503, "PLAID_NOT_CONFIGURED");
   const res = await fetch(`https://${PLAID_ENV}.plaid.com${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

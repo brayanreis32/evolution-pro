@@ -82,6 +82,7 @@ const dict = {
   confirmForceDelete: ["{name} tem horas registradas. Como desenvolvedor, você pode excluir mesmo assim, e TODAS as batidas de ponto dele serão apagadas. Continuar?",
     "{name} has recorded hours. As developer you can delete anyway, and ALL of their punches will be removed. Continue?"],
   confirmDeleteInvoice: ["Excluir este invoice? Se ele estava pago, o lançamento no Financeiro também será apagado.", "Delete this invoice? If it was paid, its Finance entry will be removed too."],
+  err_PLAID_NOT_CONFIGURED: ["A conexão com o banco ainda não foi configurada (faltam as chaves do Plaid no Supabase).", "Bank connection is not set up yet (Plaid keys are missing in Supabase)."],
   err_CANNOT_DELETE_SELF: ["Você não pode excluir o seu próprio usuário.", "You can't delete your own user."], activate: ["Ativar", "Activate"],
 
   // locais

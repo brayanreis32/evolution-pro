@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { callFunction, supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
-import { useI18n } from "../../lib/i18n";
+import { useErrorText, useI18n } from "../../lib/i18n";
 import { fmtDate, fmtDateTime, money, monthRange, today } from "../../lib/format";
 import type { BankAccount, Category, Transaction, TxnKind } from "../../lib/types";
 import { downloadCsv, Empty, Field, Modal, PageHeader, PeriodPicker, Stat, useToast, type Period } from "../../components/ui";
@@ -76,6 +76,7 @@ function TxnForm({ txn, categories, accounts, onClose, onSaved }: {
 
 function ConnectBank({ onDone, onError }: { onDone: (msg: string) => void; onError: (msg: string) => void }) {
   const { t, lang } = useI18n();
+  const errText = useErrorText();
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -96,7 +97,7 @@ function ConnectBank({ onDone, onError }: { onDone: (msg: string) => void; onErr
   const start = async () => {
     setBusy(true);
     try { setToken((await callFunction("plaid-link-token", { language: lang })).link_token); }
-    catch (e) { onError((e as Error).message); }
+    catch (e) { onError(errText(e)); }
     finally { setBusy(false); }
   };
 
