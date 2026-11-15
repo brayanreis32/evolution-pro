@@ -516,6 +516,11 @@ create table public.clients (
   created_at   timestamptz not null default now()
 );
 
+-- primeiro cliente (outros são cadastrados pela tela Clientes)
+insert into public.clients (name, email, address, city, state, zip)
+values ('Quintão Construction Corp', 'contact@quintaoconstruction.com',
+        '135 Granite St', 'Leominster', 'MA', '01453');
+
 create table public.invoices (
   id          uuid primary key default gen_random_uuid(),
   number      text unique,
