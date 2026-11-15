@@ -4,6 +4,12 @@
   "name": "evolution-pro",
   "compatibility_date": "2025-09-01",
   "workers_dev": true,
+  // Domínio próprio (zona na mesma conta da Cloudflare)
+  "routes": [
+    { "pattern": "app.evolutionprocarpentry.com", "custom_domain": true },
+    { "pattern": "evolutionprocarpentry.com", "custom_domain": true },
+    { "pattern": "www.evolutionprocarpentry.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./web/dist",
     "not_found_handling": "single-page-application"
