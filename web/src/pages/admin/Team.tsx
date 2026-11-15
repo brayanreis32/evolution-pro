@@ -60,7 +60,7 @@ function EditEmployee({ emp, onClose, onSaved, onDeleted }: { emp: Profile; onCl
   const { t } = useI18n();
   const errText = useErrorText();
   const [busy, setBusy] = useState(false);
-  const { profile } = useAuth();
+  const { profile, isDeveloper } = useAuth();
   const [f, setF] = useState(emp);
   const [err, setErr] = useState("");
   const isMe = profile?.id === emp.id;
@@ -77,7 +77,13 @@ function EditEmployee({ emp, onClose, onSaved, onDeleted }: { emp: Profile; onCl
     if (!confirm(t("confirmDeleteEmployee", { name: emp.full_name || emp.email || "" }))) return;
     setBusy(true); setErr("");
     try { await callFunction("delete-employee", { id: emp.id }); onDeleted(); }
-    catch (e) { setErr(errText(e)); }
+    catch (e) {
+      const name = emp.full_name || emp.email || "";
+      if ((e as Error).message === "HAS_HISTORY_DEV" && isDeveloper && confirm(t("confirmForceDelete", { name }))) {
+        try { await callFunction("delete-employee", { id: emp.id, force: true }); onDeleted(); }
+        catch (e2) { setErr(errText(e2)); }
+      } else if ((e as Error).message !== "HAS_HISTORY_DEV") setErr(errText(e));
+    }
     finally { setBusy(false); }
   };
 

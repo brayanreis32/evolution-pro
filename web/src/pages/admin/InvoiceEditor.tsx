@@ -16,7 +16,7 @@ export default function InvoiceEditor() {
   const isNew = id === "new";
   const nav = useNavigate();
   const { t, lang } = useI18n();
-  const { company } = useAuth();
+  const { company, isDeveloper } = useAuth();
   const toast = useToast();
   const cur = company?.currency ?? "USD";
 
@@ -118,8 +118,11 @@ export default function InvoiceEditor() {
   };
 
   const remove = async () => {
-    if (!inv.id || !confirm(t("confirmDelete"))) return;
-    await supabase.from("invoices").delete().eq("id", inv.id);
+    if (!inv.id || !confirm(t(inv.status === "draft" ? "confirmDelete" : "confirmDeleteInvoice"))) return;
+    // lançamento automático de invoice pago sai junto
+    await supabase.from("transactions").delete().eq("invoice_id", inv.id).eq("source", "invoice");
+    const { error } = await supabase.from("invoices").delete().eq("id", inv.id);
+    if (error) { toast.fail(error.message); return; }
     nav("/invoices");
   };
 
@@ -234,7 +237,7 @@ export default function InvoiceEditor() {
             {inv.status !== "draft" && inv.status !== "void" && <button className="btn-secondary" onClick={() => setStatus("draft")}>{t("markDraft")}</button>}
             {inv.status !== "void" && inv.status !== "paid" && <button className="btn-ghost text-slate-500" onClick={() => setStatus("void")}>{t("markVoid")}</button>}
             <button className="btn-ghost" onClick={duplicate}>{t("duplicate")}</button>
-            {inv.status === "draft" && <button className="btn-ghost text-red-600" onClick={remove}>{t("delete")}</button>}
+            {(inv.status === "draft" || isDeveloper) && <button className="btn-ghost text-red-600" onClick={remove}>{t("delete")}</button>}
           </div>
           <p className="text-xs text-slate-500">{t("paidHint")}</p>
         </div>
