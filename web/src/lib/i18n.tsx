@@ -98,7 +98,7 @@ const dict = {
   paymentRecorded: ["Pagamento lançado no Financeiro.", "Payment recorded in Finance."],
 
   // ponto (celular do funcionário)
-  hello: ["Olá", "Hi"], siteToday: ["Seu local de trabalho hoje", "Your job site today"],
+  hello: ["Olá", "Hi"], mySchedule: ["Minha escala", "My schedule"], siteToday: ["Seu local de trabalho hoje", "Your job site today"],
   noSiteToday: ["Você não está escalado em nenhum local hoje. Fale com o administrador.",
     "You are not assigned to any job site today. Contact your administrator."],
   st_off: ["Fora do expediente", "Off the clock"], st_working: ["Trabalhando", "Working"], st_break: ["Em pausa", "On break"],

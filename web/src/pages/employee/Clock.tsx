@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useErrorText, useI18n } from "../../lib/i18n";
 import { distanceM, getPosition, type Position } from "../../lib/geo";
-import { fmtTime, hours, mapsLink, today } from "../../lib/format";
+import { fmtDate, fmtTime, hours, mapsLink, today } from "../../lib/format";
 import type { JobSite, Punch, PunchType, Session } from "../../lib/types";
 import { useToast } from "../../components/ui";
 
@@ -22,6 +22,7 @@ export default function Clock() {
   const [last, setLast] = useState<Punch | null>(null);
   const [todayPunches, setTodayPunches] = useState<Punch[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [schedule, setSchedule] = useState<{ start_date: string; end_date: string; site_name: string; address: string; latitude: number; longitude: number }[]>([]);
   const [pos, setPos] = useState<Position | null>(null);
   const [posError, setPosError] = useState("");
   const [locating, setLocating] = useState(false);
@@ -33,12 +34,14 @@ export default function Clock() {
     if (!profile) return;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    const [s, l, tp, ws] = await Promise.all([
+    const [s, l, tp, ws, sc] = await Promise.all([
       supabase.rpc("my_sites_today"),
       supabase.from("time_punches").select("*").eq("employee_id", profile.id).order("punched_at", { ascending: false }).limit(1),
       supabase.from("time_punches").select("*").eq("employee_id", profile.id).gte("punched_at", startOfDay.toISOString()).order("punched_at"),
       supabase.rpc("work_sessions", { p_start: today(), p_end: today(), p_employee: profile.id }),
+      supabase.rpc("my_schedule", { p_days: 14 }),
     ]);
+    setSchedule((sc.data ?? []) as typeof schedule);
     setSites((s.data ?? []) as JobSite[]);
     setLast(((l.data ?? [])[0] ?? null) as Punch | null);
     setTodayPunches((tp.data ?? []) as Punch[]);
@@ -187,6 +190,24 @@ export default function Clock() {
           </ul>
         )}
       </div>
+      {schedule.length > 0 && (
+        <div className="card p-5">
+          <h2 className="mb-2">{t("mySchedule")}</h2>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {schedule.map((a) => (
+              <li key={a.start_date + a.site_name} className="py-2">
+                <div className="flex justify-between gap-2">
+                  <span className="font-medium">{a.site_name}</span>
+                  <span className="shrink-0 text-xs text-slate-500">
+                    {a.start_date === a.end_date ? fmtDate(a.start_date, lang) : `${fmtDate(a.start_date, lang)} → ${fmtDate(a.end_date, lang)}`}
+                  </span>
+                </div>
+                <a className="text-xs text-brand-600 underline" href={mapsLink(a.latitude, a.longitude)} target="_blank" rel="noreferrer">{a.address}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="text-center text-xs text-slate-400">{t("installHint")}</p>
     </div>
   );
