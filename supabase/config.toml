@@ -1,0 +1,5 @@
+project_id = "evolution-pro"
+
+[auth]
+# Só o admin cadastra funcionários (pela tela Equipe). Ninguém se cadastra sozinho.
+enable_signup = false
