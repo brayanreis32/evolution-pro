@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Lang } from "./types";
+import { fmtDistance } from "./format";
 
 const dict = {
   // comum
@@ -120,8 +121,8 @@ const dict = {
     "Tip: on your phone, use \"Add to Home Screen\" to open it like an app."],
 
   // erros do ponto (vindos do banco)
-  err_OUT_OF_RANGE: ["Você está a {dist} m do local. Precisa estar a até {radius} m para bater o ponto.",
-    "You are {dist} m from the site. You must be within {radius} m to punch."],
+  err_OUT_OF_RANGE: ["Você está a {dist} do local. Precisa estar a até {radius} m para bater o ponto.",
+    "You are {dist} from the site. You must be within {radius} m to punch."],
   err_LOW_ACCURACY: ["GPS impreciso ({acc} m). Vá para um lugar aberto e tente de novo.",
     "GPS is not accurate enough ({acc} m). Move to an open area and try again."],
   err_NO_SITE_TODAY: ["Você não está escalado em nenhum local hoje.", "You are not assigned to a job site today."],
@@ -206,7 +207,7 @@ export function useErrorText() {
     const raw = (e as any)?.message ?? String(e);
     const [code, a, b] = raw.split(":");
     const key = `err_${code}` as DictKey;
-    if (key in dict) return t(key, { dist: a, radius: b, acc: a });
+    if (key in dict) return t(key, { dist: code === "OUT_OF_RANGE" ? fmtDistance(Number(a)) : a, radius: b, acc: a });
     return raw;
   };
 }

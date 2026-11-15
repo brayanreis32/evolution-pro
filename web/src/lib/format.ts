@@ -52,4 +52,7 @@ export const monthRange = (d = today()) => {
   };
 };
 
+/** Distância amigável: metros perto, milhas longe (EUA) */
+export const fmtDistance = (m: number) => (m < 1000 ? `${Math.round(m)} m` : `${(m / 1609.34).toFixed(1)} mi`);
+
 export const mapsLink = (lat: number, lng: number) => `https://www.google.com/maps?q=${lat},${lng}`;

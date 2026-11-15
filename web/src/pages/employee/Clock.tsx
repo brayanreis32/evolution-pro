@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useErrorText, useI18n } from "../../lib/i18n";
 import { distanceM, getPosition, type Position } from "../../lib/geo";
-import { fmtDate, fmtTime, hours, mapsLink, today } from "../../lib/format";
+import { fmtDate, fmtDistance, fmtTime, hours, mapsLink, today } from "../../lib/format";
 import type { JobSite, Punch, PunchType, Session } from "../../lib/types";
 import { useToast } from "../../components/ui";
 
@@ -149,7 +149,7 @@ export default function Clock() {
           ) : dist !== null && site ? (
             <div className="flex items-center justify-between gap-2">
               <span>
-                {t("youAre")} <b>{dist < 1000 ? `${Math.round(dist)} m` : `${(dist / 1609).toFixed(1)} mi`}</b> {t("fromSite")}
+                {t("youAre")} <b>{fmtDistance(dist)}</b> {t("fromSite")}
                 <span className="block text-xs text-slate-400">GPS ±{Math.round(pos!.accuracy)} m</span>
               </span>
               <span className={`badge ${inside ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-700"}`}>
