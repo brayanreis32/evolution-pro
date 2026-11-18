@@ -59,7 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: (profile?.role === "admin" || profile?.role === "developer") && Boolean(profile?.active),
     isDeveloper: profile?.role === "developer" && Boolean(profile?.active),
     reloadCompany,
-    signOut: async () => { await supabase.auth.signOut(); },
+    signOut: async () => {
+      try { sessionStorage.removeItem("ep-splash-shown"); } catch { /* ignora */ }
+      await supabase.auth.signOut();
+    },
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

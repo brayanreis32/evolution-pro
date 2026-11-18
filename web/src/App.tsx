@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./lib/auth";
 import { useI18n } from "./lib/i18n";
 import Layout, { MoreMenu } from "./components/Layout";
+import Splash, { useSplash } from "./components/Splash";
 import Login from "./pages/Login";
 import Dashboard from "./pages/admin/Dashboard";
 import Finance from "./pages/admin/Finance";
@@ -19,6 +20,7 @@ import MyHours from "./pages/employee/MyHours";
 export default function App() {
   const { session, profile, loading, isAdmin, signOut } = useAuth();
   const { t } = useI18n();
+  const splash = useSplash(Boolean(session && profile?.active));
 
   if (loading) return <div className="flex min-h-screen items-center justify-center text-slate-500">{t("loading")}</div>;
   if (!session) return <Login />;
@@ -32,6 +34,8 @@ export default function App() {
   }
 
   return (
+    <>
+    {splash.show && <Splash onDone={splash.done} />}
     <Routes>
       {/* invoice para imprimir: tela cheia, sem menu */}
       {isAdmin && <Route path="/invoices/:id/print" element={<InvoiceView />} />}
@@ -59,5 +63,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
+    </>
   );
 }

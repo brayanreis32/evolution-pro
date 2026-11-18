@@ -29,3 +29,35 @@
   @page { size: letter; margin: 0.4in; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ---------- abertura (logo animada, ~1,5 s) ---------- */
+.splash {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 45%, #2f4434 0%, #1e2b22 55%, #141d17 100%);
+  transition: opacity 300ms ease;
+  cursor: pointer;
+}
+.splash-out { opacity: 0; }
+.splash-logo { width: min(86vw, 760px); height: auto; overflow: visible; animation: sp-breathe 1.8s linear both; }
+.sp-ln { fill: none; stroke: #7ed957; stroke-width: 12; stroke-linejoin: miter; }
+.sp-roof { stroke-dasharray: 400; stroke-dashoffset: 400; animation: sp-draw 550ms cubic-bezier(.6,0,.3,1) 50ms both; }
+.sp-chim { stroke-width: 10; stroke-dasharray: 60; stroke-dashoffset: 60; animation: sp-draw 220ms ease-out 450ms both; }
+.sp-inner { stroke-width: 7; stroke-dasharray: 130; stroke-dashoffset: 130; animation: sp-draw 250ms ease-out 380ms both; }
+.sp-win { transform-box: fill-box; transform-origin: center; animation: sp-pop 220ms cubic-bezier(.3,1.6,.5,1) both; }
+.sp-evo { animation: sp-up 320ms cubic-bezier(.2,.8,.2,1) 560ms both; }
+.sp-rest { animation: sp-reveal 400ms cubic-bezier(.6,0,.2,1) 680ms both; }
+.sp-bar { transform-box: fill-box; animation: sp-grow 300ms cubic-bezier(.6,0,.2,1) 920ms both; }
+.sp-bar-l { transform-origin: right; }
+.sp-bar-r { transform-origin: left; }
+.sp-carp { animation: sp-spread 400ms cubic-bezier(.2,.8,.2,1) 1000ms both; }
+@keyframes sp-draw { to { stroke-dashoffset: 0; } }
+@keyframes sp-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes sp-up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sp-reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes sp-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes sp-spread { from { letter-spacing: 17px; opacity: 0; } to { letter-spacing: 11px; opacity: 1; } }
+@keyframes sp-breathe { from { transform: scale(.96); } to { transform: scale(1.01); } }
+@media (prefers-reduced-motion: reduce) {
+  .splash-logo, .sp-roof, .sp-chim, .sp-inner, .sp-win, .sp-evo, .sp-rest, .sp-bar, .sp-carp { animation: none !important; stroke-dashoffset: 0; }
+}
