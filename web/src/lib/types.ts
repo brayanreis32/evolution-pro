@@ -7,6 +7,12 @@ export type Lang = "pt" | "en";
 export interface Profile {
   id: string; full_name: string; email: string | null; phone: string | null;
   role: Role; hourly_rate: number; language: Lang; active: boolean; created_at: string;
+  zelle_contact: string | null; zelle_name: string | null;
+}
+export interface PayrollPayment {
+  id: string; employee_id: string; period_start: string; period_end: string; hours: number; hourly_rate: number;
+  gross: number; adjustment: number; amount: number; method: string; reference: string | null; note: string | null;
+  paid_at: string; transaction_id: string | null;
 }
 export interface Company {
   id: number; name: string; address: string | null; city: string | null; state: string | null; zip: string | null;

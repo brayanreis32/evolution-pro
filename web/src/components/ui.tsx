@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useI18n } from "../lib/i18n";
-import { monthRange, weekRange, addDays, today, parseDate, iso } from "../lib/format";
+import { monthRange, weekRange, halfMonthRange, addDays, today, parseDate, iso } from "../lib/format";
 
 export function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   useEffect(() => {
@@ -82,11 +82,14 @@ export function useToast() {
 
 export type Period = { start: string; end: string };
 
-export function PeriodPicker({ value, onChange, mode = "week" }: { value: Period; onChange: (p: Period) => void; mode?: "week" | "month" }) {
+export function PeriodPicker({ value, onChange, mode = "week" }: { value: Period; onChange: (p: Period) => void; mode?: "week" | "month" | "report" }) {
   const { t } = useI18n();
+  const lastMonth = (() => { const d = parseDate(today()); d.setDate(0); return monthRange(iso(d)); })();
   const presets: [string, Period][] = mode === "week"
-    ? [[t("thisWeek"), weekRange()], [t("lastWeek"), weekRange(addDays(today(), -7))], [t("thisMonth"), monthRange()]]
-    : [[t("thisMonth"), monthRange()], [t("lastMonth"), (() => { const d = parseDate(today()); d.setDate(0); return monthRange(iso(d)); })()], [t("thisWeek"), weekRange()]];
+    ? [[t("thisWeek"), weekRange()], [t("lastWeek"), weekRange(addDays(today(), -7))], [t("halfMonth"), halfMonthRange()], [t("thisMonth"), monthRange()]]
+    : mode === "report"
+    ? [[t("weekly"), weekRange()], [t("biweekly"), halfMonthRange()], [t("monthly"), monthRange()], [t("lastMonth"), lastMonth]]
+    : [[t("thisMonth"), monthRange()], [t("lastMonth"), lastMonth], [t("halfMonth"), halfMonthRange()], [t("thisWeek"), weekRange()]];
   return (
     <div className="flex flex-wrap items-end gap-2">
       {presets.map(([label, p]) => (

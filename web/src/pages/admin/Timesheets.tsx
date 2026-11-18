@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { addDays, fmtDate, fmtDateTime, fmtTime, hours, mapsLink, money, today, weekRange } from "../../lib/format";
+import { addDays, fmtDate, fmtDateTime, fmtTime, hours, mapsLink, money, weekRange } from "../../lib/format";
 import { LONG_SHIFT_HOURS, useLive } from "../../lib/live";
-import type { JobSite, PayrollRow, Punch, PunchType, Session } from "../../lib/types";
+import PayModal from "./PayModal";
+import type { JobSite, PayrollPayment, PayrollRow, Profile, Punch, PunchType, Session } from "../../lib/types";
 import { downloadCsv, Empty, Field, Modal, PageHeader, PeriodPicker, Stat, useToast, type Period } from "../../components/ui";
 
 const toLocalInput = (ts: string) => {
@@ -180,29 +181,34 @@ export default function Timesheets() {
   const [rows, setRows] = useState<PayrollRow[]>([]);
   const [sites, setSites] = useState<JobSite[]>([]);
   const [detail, setDetail] = useState<PayrollRow | null>(null);
+  const [paying, setPaying] = useState<PayrollRow | null>(null);
+  const [payments, setPayments] = useState<PayrollPayment[]>([]);
+  const [people, setPeople] = useState<Profile[]>([]);
 
   const [longOpen, setLongOpen] = useState<{ employee_id: string; clock_in: string; open_hours: number }[]>([]);
   const load = () => {
     supabase.rpc("payroll_summary", { p_start: period.start, p_end: period.end })
       .then(({ data }) => setRows((data ?? []) as PayrollRow[]));
+    supabase.from("payroll_payments").select("*").eq("period_start", period.start).eq("period_end", period.end)
+      .then(({ data }) => setPayments((data ?? []) as PayrollPayment[]));
+    supabase.from("profiles").select("*").then(({ data }) => setPeople((data ?? []) as Profile[]));
     supabase.rpc("open_shifts").then(({ data }) =>
       setLongOpen(((data ?? []) as { employee_id: string; clock_in: string; open_hours: number }[]).filter((o) => Number(o.open_hours) > LONG_SHIFT_HOURS)));
   };
   useEffect(() => { load(); }, [period]); // eslint-disable-line react-hooks/exhaustive-deps
-  useLive(["time_punches"], load);
+  useLive(["time_punches", "payroll_payments"], load);
   useEffect(() => { supabase.from("job_sites").select("*").order("name").then(({ data }) => setSites((data ?? []) as JobSite[])); }, []);
 
   const totalHours = rows.reduce((s, r) => s + Number(r.hours), 0);
   const totalPay = rows.reduce((s, r) => s + Number(r.amount), 0);
   const openCount = rows.reduce((s, r) => s + Number(r.open_shifts), 0);
 
-  const recordPayment = async (r: PayrollRow) => {
-    const { data: cat } = await supabase.from("categories").select("id").eq("name", "Folha de pagamento").eq("kind", "expense").maybeSingle();
-    const { error } = await supabase.from("transactions").insert({
-      txn_date: today(), kind: "expense", amount: r.amount, category_id: cat?.id ?? null,
-      description: `${t("payroll")} — ${r.full_name} (${fmtDate(period.start, lang)} – ${fmtDate(period.end, lang)}, ${r.hours}h)`,
-    });
-    if (error) toast.fail(error.message); else toast.ok(t("paymentRecorded"));
+  const paidTotal = payments.reduce((s, p) => s + Number(p.amount), 0);
+  const paymentOf = (id: string) => payments.find((p) => p.employee_id === id);
+  const undo = async (p: PayrollPayment) => {
+    if (!confirm(t("confirmUndo"))) return;
+    const { error } = await supabase.rpc("undo_payroll_payment", { p_id: p.id });
+    if (error) toast.fail(error.message); else load();
   };
 
   const exportCsv = () => downloadCsv(`payroll_${period.start}_${period.end}.csv`, [
@@ -230,6 +236,7 @@ export default function Timesheets() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <Stat label={t("hours")} value={totalHours.toFixed(2)} />
         <Stat label={t("toPay")} value={money(totalPay, lang, company?.currency)} />
+        <Stat label={t("payrollPaid")} value={money(paidTotal, lang, company?.currency)} tone={paidTotal > 0 ? "good" : "default"} />
         {openCount > 0 && <Stat label={t("open")} value={String(openCount)} sub={t("openShiftWarn")} tone="bad" />}
       </div>
       <div className="card overflow-x-auto">
@@ -249,7 +256,18 @@ export default function Timesheets() {
                   <td className="text-right font-semibold">{money(r.amount, lang, company?.currency)}</td>
                   <td className="whitespace-nowrap text-right">
                     <button className="btn-ghost px-2" onClick={() => setDetail(r)}>{t("details")}</button>
-                    {r.amount > 0 && <button className="btn-ghost px-2" title={t("payAsExpense")} onClick={() => recordPayment(r)}>$ {t("payAsExpense")}</button>}
+                    {(() => {
+                      const pp = paymentOf(r.employee_id);
+                      if (pp) return (
+                        <span className="ml-1 inline-flex items-center gap-2">
+                          <span className="badge bg-emerald-100 text-emerald-800">✓ {t("paidOn", { date: fmtDate(pp.paid_at.slice(0, 10), lang) })} · {money(pp.amount, lang, company?.currency)}</span>
+                          <button className="text-xs text-slate-500 hover:underline" onClick={() => undo(pp)}>{t("undoPayment")}</button>
+                        </span>
+                      );
+                      return (r.amount > 0 || r.open_shifts > 0) && (
+                        <button className="btn ml-1 bg-emerald-600 px-3 py-1.5 text-white hover:bg-emerald-700" onClick={() => setPaying(r)}>$ {t("pay")}</button>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
@@ -258,6 +276,12 @@ export default function Timesheets() {
         )}
       </div>
       {detail && <EmployeeDetail row={detail} period={period} sites={sites} onClose={() => setDetail(null)} onChanged={load} />}
+      {paying && !detail && (
+        <PayModal row={paying} period={period} sites={sites} employee={people.find((p) => p.id === paying.employee_id) ?? null}
+          onClose={() => setPaying(null)}
+          onPaid={() => { setPaying(null); toast.ok(t("paymentDone")); load(); }}
+          onFix={() => setDetail(paying)} />
+      )}
     </div>
   );
 }

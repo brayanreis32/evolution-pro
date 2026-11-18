@@ -14,6 +14,10 @@ export const parseDate = (d: string) => {
 export const fmtDate = (d: string | null | undefined, lang: Lang = "en") =>
   d ? parseDate(d).toLocaleDateString(locale(lang), { month: "short", day: "numeric", year: "numeric" }) : "—";
 
+/** Data curta para tabelas no celular: "seg., 16/11" */
+export const fmtShortDate = (d: string | null | undefined, lang: Lang = "en") =>
+  d ? parseDate(d).toLocaleDateString(locale(lang), { weekday: "short", day: "2-digit", month: "2-digit" }) : "—";
+
 export const fmtTime = (ts: string | null | undefined, lang: Lang = "en") =>
   ts ? new Date(ts).toLocaleTimeString(locale(lang), { hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -42,6 +46,15 @@ export const weekRange = (d = today()) => {
   const dow = (x.getDay() + 6) % 7;
   const start = addDays(d, -dow);
   return { start, end: addDays(start, 6) };
+};
+
+/** Quinzena: 1–15 ou 16–fim do mês */
+export const halfMonthRange = (d = today()) => {
+  const x = parseDate(d);
+  const y = x.getFullYear(), m = x.getMonth();
+  return x.getDate() <= 15
+    ? { start: iso(new Date(y, m, 1)), end: iso(new Date(y, m, 15)) }
+    : { start: iso(new Date(y, m, 16)), end: iso(new Date(y, m + 1, 0)) };
 };
 
 export const monthRange = (d = today()) => {

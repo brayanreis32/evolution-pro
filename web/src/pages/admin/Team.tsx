@@ -8,7 +8,7 @@ import { Empty, Field, Modal, PageHeader, useToast } from "../../components/ui";
 
 function NewEmployee({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const { t } = useI18n();
-  const [f, setF] = useState({ full_name: "", email: "", phone: "", password: "", hourly_rate: "", language: "pt", role: "employee" });
+  const [f, setF] = useState({ full_name: "", email: "", phone: "", password: "", hourly_rate: "", language: "pt", role: "employee", zelle_contact: "", zelle_name: "" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -30,6 +30,8 @@ function NewEmployee({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("hourlyRate")}><input className="input" type="number" min="0" step="0.01" value={f.hourly_rate} onChange={(e) => setF({ ...f, hourly_rate: e.target.value })} /></Field>
+          <Field label={t("zelleContact")}><input className="input" value={f.zelle_contact} onChange={(e) => setF({ ...f, zelle_contact: e.target.value })} placeholder="email@… / (508) 555-0100" /></Field>
+          <Field label={t("zelleName")}><input className="input" value={f.zelle_name} onChange={(e) => setF({ ...f, zelle_name: e.target.value })} /></Field>
           <Field label={t("language")}>
             <select className="input" value={f.language} onChange={(e) => setF({ ...f, language: e.target.value })}>
               <option value="pt">Português</option><option value="en">English</option>
@@ -68,6 +70,7 @@ function EditEmployee({ emp, onClose, onSaved, onDeleted }: { emp: Profile; onCl
   const save = async () => {
     const { error } = await supabase.from("profiles").update({
       full_name: f.full_name, phone: f.phone, hourly_rate: Number(f.hourly_rate), language: f.language,
+      zelle_contact: f.zelle_contact || null, zelle_name: f.zelle_name || null,
       role: isMe ? emp.role : f.role, active: isMe ? true : f.active,
     }).eq("id", emp.id);
     if (error) setErr(error.message); else onSaved();
@@ -94,6 +97,10 @@ function EditEmployee({ emp, onClose, onSaved, onDeleted }: { emp: Profile; onCl
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("phone")}><input className="input" value={f.phone ?? ""} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
           <Field label={t("hourlyRate")}><input className="input" type="number" min="0" step="0.01" value={f.hourly_rate} onChange={(e) => setF({ ...f, hourly_rate: Number(e.target.value) })} /></Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t("zelleContact")}><input className="input" value={f.zelle_contact ?? ""} onChange={(e) => setF({ ...f, zelle_contact: e.target.value })} /></Field>
+          <Field label={t("zelleName")}><input className="input" value={f.zelle_name ?? ""} onChange={(e) => setF({ ...f, zelle_name: e.target.value })} /></Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("language")}>
