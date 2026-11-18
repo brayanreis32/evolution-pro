@@ -171,9 +171,14 @@ export default function Finance() {
     } catch (e) { toast.fail((e as Error).message); } finally { setSyncing(false); }
   };
 
-  const disconnect = async (plaidItemId: string) => {
+  const [pendingDisconnect, setPendingDisconnect] = useState<string | null>(null);
+  const disconnect = (plaidItemId: string) => {
     const name = accounts.find((a) => a.plaid_item_id === plaidItemId)?.institution ?? "";
     if (!confirm(t("confirmDisconnect", { name }))) return;
+    setPendingDisconnect(plaidItemId); // pede o código do autenticador antes
+  };
+  const doDisconnect = async (plaidItemId: string) => {
+    setPendingDisconnect(null);
     try {
       const r = await callFunction("plaid-disconnect", { plaid_item_id: plaidItemId });
       toast.ok(t("disconnected", { n: r.deletedTxns }));
@@ -327,6 +332,7 @@ export default function Finance() {
         </div>
       </div>
 
+      {pendingDisconnect && <MfaGate onPassed={() => doDisconnect(pendingDisconnect)} onClose={() => setPendingDisconnect(null)} />}
       {editing && <TxnForm txn={editing} categories={cats} accounts={accounts} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </div>
   );

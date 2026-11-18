@@ -7,7 +7,7 @@ import { requireMfa, handler, json, plaid, requireAdmin, serviceClient } from ".
 
 Deno.serve(handler(async (req) => {
   const userId = await requireAdmin(req);
-  requireMfa(req); // já validado pelo requireAdmin (getUser); aqui só confere o nível
+  await requireMfa(userId);
   const { language } = await req.json().catch(() => ({}));
 
   const db = serviceClient();

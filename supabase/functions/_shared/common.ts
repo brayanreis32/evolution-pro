@@ -34,13 +34,51 @@ export async function requireAdmin(req: Request): Promise<string> {
   return user.id;
 }
 
-/** Exige que a sessão tenha passado pela confirmação em duas etapas (aal2). */
-export function requireMfa(req: Request) {
-  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    if (payload.aal === "aal2") return;
-  } catch { /* token inválido cai no erro abaixo */ }
+// ---------------------------------------------------------------- TOTP (2 etapas)
+const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+export function base32Encode(bytes: Uint8Array) {
+  let bits = 0, value = 0, out = "";
+  for (const b of bytes) {
+    value = (value << 8) | b; bits += 8;
+    while (bits >= 5) { out += B32[(value >>> (bits - 5)) & 31]; bits -= 5; }
+  }
+  if (bits > 0) out += B32[(value << (5 - bits)) & 31];
+  return out;
+}
+function base32Decode(s: string) {
+  const clean = s.toUpperCase().replace(/=+$/, "");
+  let bits = 0, value = 0; const out: number[] = [];
+  for (const c of clean) {
+    const i = B32.indexOf(c); if (i < 0) continue;
+    value = (value << 5) | i; bits += 5;
+    if (bits >= 8) { out.push((value >>> (bits - 8)) & 255); bits -= 8; }
+  }
+  return new Uint8Array(out);
+}
+async function totpAt(secret: string, step: number) {
+  const key = await crypto.subtle.importKey("raw", base32Decode(secret), { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+  const msg = new ArrayBuffer(8); new DataView(msg).setBigUint64(0, BigInt(step));
+  const h = new Uint8Array(await crypto.subtle.sign("HMAC", key, msg));
+  const o = h[h.length - 1] & 15;
+  const n = ((h[o] & 0x7f) << 24) | (h[o + 1] << 16) | (h[o + 2] << 8) | h[o + 3];
+  return String(n % 1_000_000).padStart(6, "0");
+}
+/** Confere o código aceitando ±2 janelas (±60 s) de diferença no relógio do celular. Devolve o passo usado ou null. */
+export async function checkTotp(secret: string, code: string, lastStep: number | null) {
+  const now = Math.floor(Date.now() / 1000 / 30);
+  for (const d of [0, -1, 1, -2, 2]) {
+    const step = now + d;
+    if (lastStep !== null && step <= lastStep) continue; // não aceita código já usado
+    if ((await totpAt(secret, step)) === code) return step;
+  }
+  return null;
+}
+
+/** Exige confirmação em duas etapas recente (15 min) para este usuário. */
+export async function requireMfa(userId: string) {
+  const { data } = await serviceClient().rpc("totp_get", { p_user: userId });
+  const row = (data ?? [])[0];
+  if (row?.verified && row.verified_until && new Date(row.verified_until) > new Date()) return;
   throw new HttpError(403, "MFA_REQUIRED");
 }
 

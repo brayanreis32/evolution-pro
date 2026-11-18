@@ -3,8 +3,8 @@
 import { requireMfa, handler, json, plaid, requireAdmin, serviceClient, syncItem } from "../_shared/common.ts";
 
 Deno.serve(handler(async (req) => {
-  await requireAdmin(req);
-  requireMfa(req); // já validado pelo requireAdmin (getUser); aqui só confere o nível
+  const userId = await requireAdmin(req);
+  await requireMfa(userId);
   const { public_token, institution_name } = await req.json();
   const ex = await plaid("/item/public_token/exchange", { public_token });
 

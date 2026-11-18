@@ -3,8 +3,8 @@
 import { requireMfa, handler, json, plaid, requireAdmin, serviceClient, HttpError } from "../_shared/common.ts";
 
 Deno.serve(handler(async (req) => {
-  await requireAdmin(req);
-  requireMfa(req); // já validado pelo requireAdmin (getUser); aqui só confere o nível
+  const userId = await requireAdmin(req);
+  await requireMfa(userId);
   const { plaid_item_id } = await req.json(); // id (uuid) da tabela plaid_items
   if (!plaid_item_id) throw new HttpError(400, "MISSING_FIELDS");
 
