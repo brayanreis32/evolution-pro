@@ -39,9 +39,9 @@ export default function Layout() {
   }, [lang, profile]);
 
   return (
-    <div className="min-h-screen sm:flex">
+    <div className="min-h-screen lg:flex">
       {/* menu lateral (computador) */}
-      <aside className="no-print hidden sm:flex sm:w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
+      <aside className="no-print hidden lg:flex lg:w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
         <div className="px-5 py-5">
           {company?.logo_url
             ? <img src={company.logo_url} alt={company.name} className="w-full max-h-20 object-contain" />
@@ -68,7 +68,7 @@ export default function Layout() {
       </aside>
 
       {/* topo (celular) */}
-      <header className="no-print sm:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+      <header className="no-print lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
         {company?.logo_url
           ? <img src={company.logo_url} alt={company.name} className="h-10 w-auto max-w-[55%] object-contain" />
           : <span className="font-semibold">{company?.name ?? "Evolution Pro"}</span>}
@@ -78,12 +78,12 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 min-w-0 px-4 py-5 pb-24 sm:px-8 sm:py-8 sm:pb-8">
+      <main className="flex-1 min-w-0 px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-8 lg:pb-8">
         <Outlet />
       </main>
 
       {/* menu inferior (celular) */}
-      <nav className="no-print sm:hidden fixed bottom-0 inset-x-0 z-30 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
+      <nav className="no-print lg:hidden fixed bottom-0 inset-x-0 z-30 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
         {mobile.map((i) => (
           <NavLink key={i.to} to={i.to} end={i.to === "/"}
             className={({ isActive }) => `flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${isActive ? "text-brand-700" : "text-slate-500"}`}>

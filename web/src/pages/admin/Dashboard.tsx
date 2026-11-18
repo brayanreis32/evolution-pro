@@ -64,7 +64,7 @@ export default function Dashboard() {
         <PeriodPicker value={period} onChange={setPeriod} mode="report" />
       </div>
       <p className="-mt-3 text-sm text-slate-500">{fmtDate(period.start, lang)} – {fmtDate(period.end, lang)}</p>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Stat label={t("income")} value={money(fin.income, lang, cur)} tone="good" />
         <Stat label={t("expense")} value={money(fin.expense, lang, cur)} tone="bad" />
         <Stat label={t("net")} value={money(fin.net, lang, cur)} tone={fin.net >= 0 ? "good" : "bad"} />
@@ -77,7 +77,7 @@ export default function Dashboard() {
         {accounts.length > 0 && <Stat label={t("openInvoices")} value={money(openTotal, lang, cur)} sub={overdue.length ? `${overdue.length} ${t("overdue").toLowerCase()}` : undefined} tone={overdue.length ? "bad" : "default"} />}
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <div className="card p-5">
           <h2 className="mb-3">{t("whoIsWorking")}</h2>
           {working.length === 0 ? <p className="text-sm text-slate-500">{t("nobodyWorking")}</p> : (

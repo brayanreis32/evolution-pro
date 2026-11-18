@@ -231,9 +231,9 @@ export default function Finance() {
         <Stat label={t("net")} value={money(income - expense, lang, cur)} tone={income - expense >= 0 ? "good" : "bad"} />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-5 xl:grid-cols-3">
         {/* contas */}
-        <div className="card p-5 space-y-3 lg:col-span-1">
+        <div className="card p-5 space-y-3 xl:col-span-1">
           <div className="flex items-center justify-between">
             <h2>{t("accounts")}</h2>
             {accounts.some((a) => a.plaid_item_id) && (
@@ -287,7 +287,7 @@ export default function Finance() {
         </div>
 
         {/* lançamentos */}
-        <div className="card lg:col-span-2 overflow-hidden">
+        <div className="card xl:col-span-2 overflow-hidden">
           <div className="flex flex-wrap gap-2 border-b border-slate-200 p-3">
             <input className="input flex-1 min-w-[140px]" placeholder={t("search")} value={q} onChange={(e) => setQ(e.target.value)} />
             <select className="input w-auto" value={kind} onChange={(e) => setKind(e.target.value as "" | TxnKind)}>

@@ -36,9 +36,9 @@ export function Field({ label, children, className = "" }: { label: string; chil
 export function Stat({ label, value, sub, tone = "default" }: { label: string; value: string; sub?: string; tone?: "default" | "good" | "bad" }) {
   const color = tone === "good" ? "text-emerald-600" : tone === "bad" ? "text-red-600" : "text-slate-900";
   return (
-    <div className="card p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
-      <div className={`mt-1 text-2xl font-semibold ${color}`}>{value}</div>
+    <div className="card min-w-0 p-3 sm:p-4">
+      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:text-xs">{label}</div>
+      <div className={`mt-1 break-words text-lg font-semibold leading-tight sm:text-2xl ${color}`}>{value}</div>
       {sub && <div className="mt-0.5 text-xs text-slate-500">{sub}</div>}
     </div>
   );
@@ -64,7 +64,7 @@ export function Toast({ message, onDone, tone = "good" }: { message: string; onD
     return () => clearTimeout(id);
   }, [message, onDone]);
   return (
-    <div className={`fixed bottom-20 sm:bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg px-4 py-3 text-sm font-medium text-white shadow-lg ${tone === "good" ? "bg-emerald-600" : "bg-red-600"}`}>
+    <div className={`fixed bottom-20 lg:bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg px-4 py-3 text-sm font-medium text-white shadow-lg ${tone === "good" ? "bg-emerald-600" : "bg-red-600"}`}>
       {message}
     </div>
   );

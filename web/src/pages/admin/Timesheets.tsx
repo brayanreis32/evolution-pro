@@ -233,7 +233,7 @@ export default function Timesheets() {
           ))}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
         <Stat label={t("hours")} value={totalHours.toFixed(2)} />
         <Stat label={t("toPay")} value={money(totalPay, lang, company?.currency)} />
         <Stat label={t("payrollPaid")} value={money(paidTotal, lang, company?.currency)} tone={paidTotal > 0 ? "good" : "default"} />

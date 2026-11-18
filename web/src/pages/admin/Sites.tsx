@@ -172,7 +172,7 @@ export default function Sites() {
         <button className="btn-primary" onClick={() => setEditing({})}>+ {t("newSite")}</button>
       </PageHeader>
       {sites.length === 0 ? <div className="card"><Empty /></div> : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           {sites.map((s) => {
             const list = assign.filter((a) => a.site_id === s.id);
             return (
