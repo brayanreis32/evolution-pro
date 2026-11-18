@@ -61,7 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     reloadCompany,
     signOut: async () => {
       try { sessionStorage.removeItem("ep-splash-shown"); } catch { /* ignora */ }
-      await supabase.auth.signOut();
+      // sai NESTE aparelho na hora, mesmo sem internet ou com o login já vencido
+      try { await supabase.auth.signOut({ scope: "local" }); } catch { /* ignora */ }
+      try {
+        Object.keys(localStorage).filter((k) => k.startsWith("sb-")).forEach((k) => localStorage.removeItem(k));
+      } catch { /* ignora */ }
+      setSession(null);
+      setProfile(null);
+      window.location.replace("/");
     },
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
