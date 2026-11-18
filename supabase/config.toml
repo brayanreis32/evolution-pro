@@ -3,3 +3,7 @@ project_id = "evolution-pro"
 [auth]
 # Só o admin cadastra funcionários (pela tela Equipe). Ninguém se cadastra sozinho.
 enable_signup = false
+
+# O Plaid chama esta função sem login do Supabase; ela verifica a assinatura do Plaid.
+[functions.plaid-webhook]
+verify_jwt = false

@@ -3,6 +3,7 @@ import { usePlaidLink } from "react-plaid-link";
 import { callFunction, supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useErrorText, useI18n } from "../../lib/i18n";
+import { useLive } from "../../lib/live";
 import { fmtDate, fmtDateTime, money, monthRange, today } from "../../lib/format";
 import type { BankAccount, Category, Transaction, TxnKind } from "../../lib/types";
 import { downloadCsv, Empty, Field, Modal, PageHeader, PeriodPicker, Stat, useToast, type Period } from "../../components/ui";
@@ -77,26 +78,43 @@ function TxnForm({ txn, categories, accounts, onClose, onSaved }: {
 function ConnectBank({ onDone, onError }: { onDone: (msg: string) => void; onError: (msg: string) => void }) {
   const { t, lang } = useI18n();
   const errText = useErrorText();
-  const [token, setToken] = useState<string | null>(null);
+  // Volta de banco OAuth (Chase, BofA…): o banco devolve para /financeiro?oauth_state_id=…
+  // e a janela do Plaid continua com o MESMO link_token guardado antes de sair.
+  const oauthReturn = typeof window !== "undefined" && window.location.search.includes("oauth_state_id=");
+  const [token, setToken] = useState<string | null>(() => {
+    if (!oauthReturn) return null;
+    try { return localStorage.getItem("plaid_link_token"); } catch { return null; }
+  });
   const [busy, setBusy] = useState(false);
+
+  const finish = () => {
+    setToken(null);
+    try { localStorage.removeItem("plaid_link_token"); } catch { /* ignora */ }
+    if (oauthReturn) window.history.replaceState({}, "", window.location.pathname);
+  };
 
   const { open, ready } = usePlaidLink({
     token,
+    receivedRedirectUri: oauthReturn ? window.location.href : undefined,
     onSuccess: async (public_token, metadata) => {
       setBusy(true);
       try {
         const r = await callFunction("plaid-exchange", { public_token, institution_name: metadata.institution?.name });
         onDone(t("syncDone", { added: r.added, modified: r.modified }));
-      } catch (e) { onError((e as Error).message); } finally { setBusy(false); setToken(null); }
+      } catch (e) { onError((e as Error).message); } finally { setBusy(false); finish(); }
     },
-    onExit: () => setToken(null),
+    onExit: finish,
   });
 
   useEffect(() => { if (token && ready) open(); }, [token, ready, open]);
 
   const start = async () => {
     setBusy(true);
-    try { setToken((await callFunction("plaid-link-token", { language: lang })).link_token); }
+    try {
+      const linkToken = (await callFunction("plaid-link-token", { language: lang })).link_token as string;
+      try { localStorage.setItem("plaid_link_token", linkToken); } catch { /* ignora */ }
+      setToken(linkToken);
+    }
     catch (e) { onError(errText(e)); }
     finally { setBusy(false); }
   };
@@ -130,6 +148,8 @@ export default function Finance() {
     setAccounts((a.data ?? []) as BankAccount[]);
   };
   useEffect(() => { load(); }, [period]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ao vivo: lançamentos novos do banco (webhook do Plaid), invoices pagos, folha paga
+  useLive(["transactions", "bank_accounts"], load);
 
   const sync = async () => {
     setSyncing(true);

@@ -48,7 +48,7 @@ export default function Dashboard() {
   };
   useEffect(load, [period]); // eslint-disable-line react-hooks/exhaustive-deps
   // ao vivo: funcionário bateu o ponto ou alguém foi pago → painel atualiza sozinho
-  useLive(["time_punches", "site_assignments", "payroll_payments"], load);
+  useLive(["time_punches", "site_assignments", "payroll_payments", "transactions", "bank_accounts"], load);
   const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
 
   const weekHours = payroll.reduce((s, r) => s + Number(r.hours), 0);
