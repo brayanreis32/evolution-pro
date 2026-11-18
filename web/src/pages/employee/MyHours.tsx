@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { fmtDate, fmtTime, hours, money, weekRange } from "../../lib/format";
+import { fmtDate, fmtDateTime, fmtTime, hours, money, weekRange } from "../../lib/format";
+import { useLive } from "../../lib/live";
 import type { Session } from "../../lib/types";
 import { Empty, PeriodPicker, Stat, type Period } from "../../components/ui";
 
@@ -12,11 +13,14 @@ export default function MyHours() {
   const [period, setPeriod] = useState<Period>(weekRange());
   const [rows, setRows] = useState<Session[]>([]);
 
-  useEffect(() => {
+  const load = () => {
     if (!profile) return;
     supabase.rpc("work_sessions", { p_start: period.start, p_end: period.end, p_employee: profile.id })
       .then(({ data }) => setRows((data ?? []) as Session[]));
-  }, [period, profile]);
+  };
+  useEffect(load, [period, profile]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLive(["time_punches"], load);
+  const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
 
   const closed = rows.filter((r) => !r.is_open);
   const minutes = closed.reduce((s, r) => s + Number(r.worked_minutes), 0);
@@ -39,7 +43,7 @@ export default function MyHours() {
                 <tr key={r.clock_in}>
                   <td>{fmtDate(r.work_date, lang)}</td>
                   <td>{fmtTime(r.clock_in, lang)}</td>
-                  <td>{r.is_open ? <span className="badge bg-emerald-100 text-emerald-800">{t("open")}</span> : fmtTime(r.clock_out, lang)}</td>
+                  <td>{r.is_open ? <span className="badge bg-emerald-100 text-emerald-800">{t("open")}</span> : (r.clock_out && !sameDay(r.clock_in, r.clock_out) ? fmtDateTime(r.clock_out, lang) : fmtTime(r.clock_out, lang))}</td>
                   <td>{hours(r.break_minutes)}</td>
                   <td className="text-right font-medium">{hours(r.worked_minutes)}</td>
                 </tr>

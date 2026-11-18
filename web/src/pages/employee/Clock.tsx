@@ -3,8 +3,9 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useErrorText, useI18n } from "../../lib/i18n";
 import { distanceM, getPosition, type Position } from "../../lib/geo";
-import { fmtDate, fmtDistance, fmtTime, hours, mapsLink, today } from "../../lib/format";
-import type { JobSite, Punch, PunchType, Session } from "../../lib/types";
+import { fmtDate, fmtDateTime, fmtDistance, fmtTime, hours, mapsLink } from "../../lib/format";
+import { LONG_SHIFT_HOURS, useLive, workedMinutes } from "../../lib/live";
+import type { JobSite, Punch, PunchType } from "../../lib/types";
 import { useToast } from "../../components/ui";
 
 type State = "off" | "working" | "break";
@@ -21,7 +22,8 @@ export default function Clock() {
   const [sites, setSites] = useState<JobSite[]>([]);
   const [last, setLast] = useState<Punch | null>(null);
   const [todayPunches, setTodayPunches] = useState<Punch[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [shiftStart, setShiftStart] = useState<string | null>(null); // entrada do turno aberto (pode ser de outro dia)
+  const [shiftSite, setShiftSite] = useState<JobSite | null>(null);
   const [schedule, setSchedule] = useState<{ start_date: string; end_date: string; site_name: string; address: string; latitude: number; longitude: number }[]>([]);
   const [pos, setPos] = useState<Position | null>(null);
   const [posError, setPosError] = useState("");
@@ -34,20 +36,48 @@ export default function Clock() {
     if (!profile) return;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    const [s, l, tp, ws, sc] = await Promise.all([
+    const [s, l, os, sc] = await Promise.all([
       supabase.rpc("my_sites_today"),
       supabase.from("time_punches").select("*").eq("employee_id", profile.id).order("punched_at", { ascending: false }).limit(1),
-      supabase.from("time_punches").select("*").eq("employee_id", profile.id).gte("punched_at", startOfDay.toISOString()).order("punched_at"),
-      supabase.rpc("work_sessions", { p_start: today(), p_end: today(), p_employee: profile.id }),
+      supabase.rpc("open_shifts"),
       supabase.rpc("my_schedule", { p_days: 14 }),
     ]);
+    const open = ((os.data ?? []) as { employee_id: string; site_id: string | null; clock_in: string }[])
+      .find((o) => o.employee_id === profile.id) ?? null;
+    // mostra as batidas de hoje E o turno que já estava aberto à meia-noite
+    // (começou em outro dia e está aberto ou terminou hoje)
+    let from = startOfDay;
+    const { data: before } = await supabase.from("time_punches").select("punch, punched_at")
+      .eq("employee_id", profile.id).lt("punched_at", startOfDay.toISOString())
+      .order("punched_at", { ascending: false }).limit(1);
+    if (before?.[0] && before[0].punch !== "clock_out") {
+      const { data: lastIn } = await supabase.from("time_punches").select("punched_at")
+        .eq("employee_id", profile.id).eq("punch", "clock_in").lt("punched_at", startOfDay.toISOString())
+        .order("punched_at", { ascending: false }).limit(1);
+      if (lastIn?.[0]) from = new Date(lastIn[0].punched_at);
+    }
+    const tp = await supabase.from("time_punches").select("*").eq("employee_id", profile.id)
+      .gte("punched_at", from.toISOString()).order("punched_at");
+    const todaySites = (s.data ?? []) as JobSite[];
+    let openSite: JobSite | null = null;
+    if (open?.site_id) {
+      openSite = todaySites.find((x) => x.id === open.site_id) ?? null;
+      if (!openSite) {
+        const { data } = await supabase.from("job_sites").select("*").eq("id", open.site_id).maybeSingle();
+        openSite = (data as JobSite | null) ?? null;
+      }
+    }
     setSchedule((sc.data ?? []) as typeof schedule);
-    setSites((s.data ?? []) as JobSite[]);
+    setSites(todaySites);
     setLast(((l.data ?? [])[0] ?? null) as Punch | null);
     setTodayPunches((tp.data ?? []) as Punch[]);
-    setSessions((ws.data ?? []) as Session[]);
+    setShiftStart(open?.clock_in ?? null);
+    setShiftSite(openSite);
     setLoaded(true);
   }, [profile]);
+
+  // ao vivo: se o administrador corrigir uma batida ou mudar a escala, a tela atualiza
+  useLive(["time_punches", "site_assignments"], load);
 
   const locate = useCallback(async () => {
     setLocating(true);
@@ -71,11 +101,11 @@ export default function Clock() {
 
   // local relevante: o da entrada (se trabalhando) ou o mais próximo escalado hoje
   const site = useMemo(() => {
-    if (state !== "off" && last?.site_id) return sites.find((s) => s.id === last.site_id) ?? null;
+    if (state !== "off") return shiftSite ?? (last?.site_id ? sites.find((s) => s.id === last.site_id) ?? null : null);
     if (!pos) return sites[0] ?? null;
     return [...sites].sort((a, b) =>
       distanceM(pos.lat, pos.lng, a.latitude, a.longitude) - distanceM(pos.lat, pos.lng, b.latitude, b.longitude))[0] ?? null;
-  }, [sites, pos, state, last]);
+  }, [sites, pos, state, last, shiftSite]);
 
   const dist = site && pos ? distanceM(pos.lat, pos.lng, site.latitude, site.longitude) : null;
   const inside = dist !== null && site ? dist <= site.radius_m : false;
@@ -97,7 +127,11 @@ export default function Clock() {
     }
   };
 
-  const workedToday = sessions.reduce((sum, s) => sum + Number(s.worked_minutes), 0);
+  const worked = workedMinutes(todayPunches);
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const crossDay = todayPunches.some((p) => new Date(p.punched_at) < startOfToday);
+  const openHours = shiftStart ? (Date.now() - new Date(shiftStart).getTime()) / 3600000 : 0;
+  const when = (ts: string) => (new Date(ts) < startOfToday ? fmtDateTime(ts, lang) : fmtTime(ts, lang));
 
   const statusStyle = {
     off: "bg-slate-100 text-slate-700",
@@ -125,8 +159,12 @@ export default function Clock() {
           <span className={`badge px-3 py-1 text-sm ${statusStyle}`}>
             {state === "off" ? t("st_off") : state === "working" ? t("st_working") : t("st_break")}
           </span>
-          {state !== "off" && last && <span className="text-xs text-slate-500">{t("since")} {fmtTime(last.punched_at, lang)}</span>}
+          {state !== "off" && shiftStart && <span className="text-xs text-slate-500">{t("since")} {when(shiftStart)}</span>}
         </div>
+
+        {state !== "off" && openHours > LONG_SHIFT_HOURS && (
+          <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{t("longShiftWarn", { h: Math.floor(openHours) })}</p>
+        )}
 
         {loaded && sites.length === 0 && state === "off" ? (
           <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{t("noSiteToday")}</p>
@@ -176,15 +214,15 @@ export default function Clock() {
 
       <div className="card p-5">
         <div className="flex items-center justify-between">
-          <h2>{t("todayHours")}</h2>
-          <span className="text-xl font-semibold">{hours(workedToday)}</span>
+          <h2>{crossDay ? t("currentShift") : t("todayHours")}</h2>
+          <span className="text-xl font-semibold">{hours(worked)}</span>
         </div>
         {todayPunches.length > 0 && (
           <ul className="mt-3 divide-y divide-slate-100 text-sm">
             {todayPunches.map((p) => (
               <li key={p.id} className="flex justify-between py-2">
                 <span>{t(`p_${p.punch}` as const)}</span>
-                <span className="font-medium">{fmtTime(p.punched_at, lang)}</span>
+                <span className="font-medium">{when(p.punched_at)}</span>
               </li>
             ))}
           </ul>

@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
 import { addDays, fmtDate, fmtDateTime, fmtTime, hours, mapsLink, money, today, weekRange } from "../../lib/format";
+import { LONG_SHIFT_HOURS, useLive } from "../../lib/live";
 import type { JobSite, PayrollRow, Punch, PunchType, Session } from "../../lib/types";
 import { downloadCsv, Empty, Field, Modal, PageHeader, PeriodPicker, Stat, useToast, type Period } from "../../components/ui";
 
@@ -72,19 +73,32 @@ function EmployeeDetail({ row, period, sites, onClose, onChanged }: {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [punches, setPunches] = useState<Punch[]>([]);
   const [editing, setEditing] = useState<Partial<Punch> | null>(null);
+  const [audit, setAudit] = useState<{ id: number; action: string; old_data: Partial<Punch> | null; new_data: Partial<Punch> | null; changed_by: string | null; changed_at: string }[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
   const siteName = (id: string | null) => sites.find((s) => s.id === id)?.name ?? "—";
 
   const load = async () => {
-    const [s, p] = await Promise.all([
-      supabase.rpc("work_sessions", { p_start: period.start, p_end: period.end, p_employee: row.employee_id }),
+    const s = await supabase.rpc("work_sessions", { p_start: period.start, p_end: period.end, p_employee: row.employee_id });
+    const ss = (s.data ?? []) as Session[];
+    // batidas do período + as dos turnos que começaram antes ou terminaram depois dele
+    let from = new Date(period.start + "T00:00:00");
+    let to = new Date(addDays(period.end, 1) + "T00:00:00");
+    for (const x of ss) {
+      if (new Date(x.clock_in) < from) from = new Date(x.clock_in);
+      if (x.clock_out && new Date(x.clock_out) >= to) to = new Date(new Date(x.clock_out).getTime() + 1000);
+    }
+    const [p, a] = await Promise.all([
       supabase.from("time_punches").select("*").eq("employee_id", row.employee_id)
-        .gte("punched_at", new Date(period.start + "T00:00:00").toISOString())
-        .lt("punched_at", new Date(addDays(period.end, 1) + "T00:00:00").toISOString()).order("punched_at"),
+        .gte("punched_at", from.toISOString()).lt("punched_at", to.toISOString()).order("punched_at"),
+      supabase.from("time_punch_audit").select("*").eq("employee_id", row.employee_id).order("changed_at", { ascending: false }).limit(100),
     ]);
-    setSessions((s.data ?? []) as Session[]);
+    setSessions(ss);
     setPunches((p.data ?? []) as Punch[]);
+    setAudit((a.data ?? []) as typeof audit);
   };
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLive(["time_punches"], load);
+  const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
 
   return (
     <Modal title={row.full_name} onClose={onClose} wide>
@@ -97,7 +111,7 @@ function EmployeeDetail({ row, period, sites, onClose, onChanged }: {
                 <tr key={s.clock_in}>
                   <td>{fmtDate(s.work_date, lang)}</td><td>{siteName(s.site_id)}</td>
                   <td>{fmtTime(s.clock_in, lang)}</td>
-                  <td>{s.is_open ? <span className="badge bg-amber-100 text-amber-800">{t("open")}</span> : fmtTime(s.clock_out, lang)}</td>
+                  <td>{s.is_open ? <span className="badge bg-amber-100 text-amber-800">{t("open")}</span> : (s.clock_out && !sameDay(s.clock_in, s.clock_out) ? fmtDateTime(s.clock_out, lang) : fmtTime(s.clock_out, lang))}</td>
                   <td>{hours(s.break_minutes)}</td><td className="text-right font-medium">{hours(s.worked_minutes)}</td>
                 </tr>
               ))}
@@ -128,6 +142,27 @@ function EmployeeDetail({ row, period, sites, onClose, onChanged }: {
             ))}
           </ul>
         </div>
+        <div>
+          <button className="text-sm font-medium text-brand-600" onClick={() => setShowAudit(!showAudit)}>
+            {showAudit ? "▾" : "▸"} {t("history")} ({audit.length})
+          </button>
+          {showAudit && (
+            <ul className="mt-2 divide-y divide-slate-100 text-xs text-slate-600">
+              {audit.map((h) => {
+                const before = h.old_data, after = h.new_data;
+                const label = (d: Partial<Punch> | null) => d ? `${t(`p_${d.punch}` as "p_clock_in")} ${d.punched_at ? fmtDateTime(d.punched_at, lang) : ""}` : "";
+                return (
+                  <li key={h.id} className="py-1.5">
+                    <span className="font-medium">{fmtDateTime(h.changed_at, lang)}</span> ·{" "}
+                    {h.action === "insert" && <>+ {label(after)}</>}
+                    {h.action === "update" && <>{label(before)} → {label(after)}</>}
+                    {h.action === "delete" && <span className="text-red-600">✕ {label(before)}</span>}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
       {editing && (
         <PunchForm employeeId={row.employee_id} punch={editing} sites={sites}
@@ -146,9 +181,15 @@ export default function Timesheets() {
   const [sites, setSites] = useState<JobSite[]>([]);
   const [detail, setDetail] = useState<PayrollRow | null>(null);
 
-  const load = () => supabase.rpc("payroll_summary", { p_start: period.start, p_end: period.end })
-    .then(({ data }) => setRows((data ?? []) as PayrollRow[]));
+  const [longOpen, setLongOpen] = useState<{ employee_id: string; clock_in: string; open_hours: number }[]>([]);
+  const load = () => {
+    supabase.rpc("payroll_summary", { p_start: period.start, p_end: period.end })
+      .then(({ data }) => setRows((data ?? []) as PayrollRow[]));
+    supabase.rpc("open_shifts").then(({ data }) =>
+      setLongOpen(((data ?? []) as { employee_id: string; clock_in: string; open_hours: number }[]).filter((o) => Number(o.open_hours) > LONG_SHIFT_HOURS)));
+  };
   useEffect(() => { load(); }, [period]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLive(["time_punches"], load);
   useEffect(() => { supabase.from("job_sites").select("*").order("name").then(({ data }) => setSites((data ?? []) as JobSite[])); }, []);
 
   const totalHours = rows.reduce((s, r) => s + Number(r.hours), 0);
@@ -176,6 +217,16 @@ export default function Timesheets() {
         <button className="btn-secondary" onClick={exportCsv}>{t("exportCsv")}</button>
       </PageHeader>
       <PeriodPicker value={period} onChange={setPeriod} />
+      {longOpen.length > 0 && (
+        <div className="card border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <b>⚠ {t("openShifts")}:</b>{" "}
+          {longOpen.map((o) => (
+            <span key={o.employee_id} className="mr-3">
+              {rows.find((r) => r.employee_id === o.employee_id)?.full_name ?? "—"} — {t("since")} {fmtDateTime(o.clock_in, lang)} ({t("longShift", { h: Math.floor(Number(o.open_hours)) })})
+            </span>
+          ))}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <Stat label={t("hours")} value={totalHours.toFixed(2)} />
         <Stat label={t("toPay")} value={money(totalPay, lang, company?.currency)} />

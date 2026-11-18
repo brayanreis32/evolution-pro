@@ -3,8 +3,11 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { fmtDate, fmtTime, money, monthRange, today, weekRange } from "../../lib/format";
-import type { BankAccount, Invoice, JobSite, PayrollRow, Session, Transaction } from "../../lib/types";
+import { fmtDate, fmtDateTime, fmtTime, money, monthRange, today, weekRange } from "../../lib/format";
+import { LONG_SHIFT_HOURS, useLive } from "../../lib/live";
+import type { BankAccount, Invoice, JobSite, PayrollRow, Transaction } from "../../lib/types";
+
+type OpenShift = { employee_id: string; site_id: string | null; clock_in: string; on_break: boolean; open_hours: number };
 import { Empty, Stat } from "../../components/ui";
 
 export default function Dashboard() {
@@ -15,23 +18,27 @@ export default function Dashboard() {
   const [payroll, setPayroll] = useState<PayrollRow[]>([]);
   const [open, setOpen] = useState<Invoice[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
-  const [working, setWorking] = useState<Session[]>([]);
+  const [working, setWorking] = useState<OpenShift[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [sites, setSites] = useState<JobSite[]>([]);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
 
-  useEffect(() => {
+  const load = () => {
     const m = monthRange(), w = weekRange();
     supabase.rpc("finance_summary", { p_start: m.start, p_end: m.end }).then(({ data }) => data?.[0] && setFin(data[0]));
     supabase.rpc("payroll_summary", { p_start: w.start, p_end: w.end }).then(({ data }) => setPayroll((data ?? []) as PayrollRow[]));
     supabase.from("invoices").select("*").eq("status", "sent").order("due_date").then(({ data }) => setOpen((data ?? []) as Invoice[]));
     supabase.from("transactions").select("*").order("txn_date", { ascending: false }).order("created_at", { ascending: false }).limit(6)
       .then(({ data }) => setRecent((data ?? []) as Transaction[]));
-    supabase.rpc("work_sessions", { p_start: today(), p_end: today() }).then(({ data }) => setWorking(((data ?? []) as Session[]).filter((s) => s.is_open)));
+    supabase.rpc("open_shifts").then(({ data }) => setWorking((data ?? []) as OpenShift[]));
     supabase.from("profiles").select("id, full_name").then(({ data }) => setNames(Object.fromEntries((data ?? []).map((p) => [p.id, p.full_name]))));
     supabase.from("job_sites").select("*").then(({ data }) => setSites((data ?? []) as JobSite[]));
     supabase.from("bank_accounts").select("*").then(({ data }) => setAccounts((data ?? []) as BankAccount[]));
-  }, []);
+  };
+  useEffect(load, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // ao vivo: funcionário bateu o ponto → painel atualiza sozinho
+  useLive(["time_punches", "site_assignments"], load);
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
 
   const weekHours = payroll.reduce((s, r) => s + Number(r.hours), 0);
   const weekPay = payroll.reduce((s, r) => s + Number(r.amount), 0);
@@ -60,9 +67,14 @@ export default function Dashboard() {
           {working.length === 0 ? <p className="text-sm text-slate-500">{t("nobodyWorking")}</p> : (
             <ul className="space-y-2 text-sm">
               {working.map((s) => (
-                <li key={s.employee_id} className="flex items-center justify-between">
-                  <span><span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500" />{names[s.employee_id]}</span>
-                  <span className="text-xs text-slate-500">{sites.find((x) => x.id === s.site_id)?.name} · {fmtTime(s.clock_in, lang)}</span>
+                <li key={s.employee_id} className="flex flex-col gap-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span><span className={`mr-2 inline-block h-2 w-2 rounded-full ${s.on_break ? "bg-amber-500" : "bg-emerald-500"}`} />{names[s.employee_id]}{s.on_break && <span className="ml-1 text-xs text-amber-700">({t("st_break").toLowerCase()})</span>}</span>
+                    <span className="text-xs text-slate-500">{sites.find((x) => x.id === s.site_id)?.name} · {new Date(s.clock_in) < startOfToday ? fmtDateTime(s.clock_in, lang) : fmtTime(s.clock_in, lang)}</span>
+                  </div>
+                  {Number(s.open_hours) > LONG_SHIFT_HOURS && (
+                    <Link to="/horas" className="text-xs font-medium text-red-600">⚠ {t("longShift", { h: Math.floor(Number(s.open_hours)) })}</Link>
+                  )}
                 </li>
               ))}
             </ul>
