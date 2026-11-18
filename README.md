@@ -53,7 +53,7 @@ npm install
 npm run dev              # teste local em http://localhost:5173
 npm run build            # gera a pasta dist/
 ```
-Para publicar, use a **Vercel** (Root Directory: `web`) ou a Cloudflare, com as mesmas variáveis do `.env`.
+O site é publicado automaticamente na **Cloudflare** (Workers, configuração em `wrangler.jsonc`) a cada atualização da branch `main`, no endereço **evolutionprocarpentry.com**.
 
 ### 4. Celular
 Abra o endereço do sistema no celular e use **Compartilhar → Adicionar à Tela de Início** (iPhone) ou **Instalar app** (Android). O funcionário precisa **permitir a localização**.
