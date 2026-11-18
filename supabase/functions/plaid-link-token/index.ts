@@ -3,10 +3,11 @@
 //   (a mesma conta Plaid pode atender vários sistemas/clientes)
 // - Webhook: o Plaid avisa quando há lançamentos novos (sincroniza sozinho)
 // - redirect_uri (opcional, PLAID_REDIRECT_URI): bancos OAuth no celular
-import { handler, json, plaid, requireAdmin, serviceClient } from "../_shared/common.ts";
+import { requireMfa, handler, json, plaid, requireAdmin, serviceClient } from "../_shared/common.ts";
 
 Deno.serve(handler(async (req) => {
   const userId = await requireAdmin(req);
+  requireMfa(req); // já validado pelo requireAdmin (getUser); aqui só confere o nível
   const { language } = await req.json().catch(() => ({}));
 
   const db = serviceClient();

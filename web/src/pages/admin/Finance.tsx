@@ -4,6 +4,7 @@ import { callFunction, supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useErrorText, useI18n } from "../../lib/i18n";
 import { useLive } from "../../lib/live";
+import MfaGate from "../../components/MfaGate";
 import { fmtDate, fmtDateTime, money, monthRange, today } from "../../lib/format";
 import type { BankAccount, Category, Transaction, TxnKind } from "../../lib/types";
 import { downloadCsv, Empty, Field, Modal, PageHeader, PeriodPicker, Stat, useToast, type Period } from "../../components/ui";
@@ -108,7 +109,10 @@ function ConnectBank({ onDone, onError }: { onDone: (msg: string) => void; onErr
 
   useEffect(() => { if (token && ready) open(); }, [token, ready, open]);
 
-  const start = async () => {
+  const [mfa, setMfa] = useState(false);
+  const start = () => setMfa(true); // confirmação em duas etapas antes de abrir o Plaid Link
+  const openLink = async () => {
+    setMfa(false);
     setBusy(true);
     try {
       const linkToken = (await callFunction("plaid-link-token", { language: lang })).link_token as string;
@@ -119,7 +123,12 @@ function ConnectBank({ onDone, onError }: { onDone: (msg: string) => void; onErr
     finally { setBusy(false); }
   };
 
-  return <button className="btn-primary" onClick={start} disabled={busy}>🏦 {busy ? t("loading") : t("connectBank")}</button>;
+  return (
+    <>
+      <button className="btn-primary" onClick={start} disabled={busy}>🏦 {busy ? t("loading") : t("connectBank")}</button>
+      {mfa && <MfaGate onPassed={openLink} onClose={() => setMfa(false)} />}
+    </>
+  );
 }
 
 export default function Finance() {

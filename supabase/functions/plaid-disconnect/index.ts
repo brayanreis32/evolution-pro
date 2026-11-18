@@ -1,9 +1,10 @@
 // Desconecta um banco: encerra o acesso no Plaid e apaga as contas e os
 // lançamentos que vieram dele. Lançamentos manuais e de invoices ficam.
-import { handler, json, plaid, requireAdmin, serviceClient, HttpError } from "../_shared/common.ts";
+import { requireMfa, handler, json, plaid, requireAdmin, serviceClient, HttpError } from "../_shared/common.ts";
 
 Deno.serve(handler(async (req) => {
   await requireAdmin(req);
+  requireMfa(req); // já validado pelo requireAdmin (getUser); aqui só confere o nível
   const { plaid_item_id } = await req.json(); // id (uuid) da tabela plaid_items
   if (!plaid_item_id) throw new HttpError(400, "MISSING_FIELDS");
 

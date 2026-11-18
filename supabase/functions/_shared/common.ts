@@ -34,6 +34,16 @@ export async function requireAdmin(req: Request): Promise<string> {
   return user.id;
 }
 
+/** Exige que a sessão tenha passado pela confirmação em duas etapas (aal2). */
+export function requireMfa(req: Request) {
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (payload.aal === "aal2") return;
+  } catch { /* token inválido cai no erro abaixo */ }
+  throw new HttpError(403, "MFA_REQUIRED");
+}
+
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
     super(message);
