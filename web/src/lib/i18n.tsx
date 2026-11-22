@@ -19,6 +19,7 @@ const dict = {
   navDashboard: ["Início", "Dashboard"], navFinance: ["Financeiro", "Finance"], navInvoices: ["Invoices", "Invoices"],
   navClients: ["Clientes", "Clients"], navTeam: ["Equipe", "Team"], navSites: ["Locais", "Job sites"],
   navTimesheets: ["Horas / Folha", "Hours / Payroll"], navSettings: ["Empresa", "Company"], navClock: ["Ponto", "Clock"],
+  navHoursShort: ["Folha", "Payroll"],
   navMyHours: ["Minhas horas", "My hours"], logout: ["Sair", "Log out"],
 
   // login

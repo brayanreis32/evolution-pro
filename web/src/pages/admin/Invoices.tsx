@@ -51,7 +51,23 @@ export default function Invoices() {
           </button>
         ))}
       </div>
-      <div className="card overflow-x-auto">
+      <div className="space-y-2 md:hidden">
+        {list.length === 0 ? <div className="card"><Empty /></div> : list.map((i) => (
+          <Link key={i.id} to={`/invoices/${i.id}`} className="card flex items-center gap-3 p-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-brand-700">{i.number}</span>
+                <span className={`badge ${statusStyle[i.status]}`}>{t(`st_${i.status}`)}</span>
+                {isOverdue(i) && <span className="badge bg-red-100 text-red-700">{t("overdue")}</span>}
+              </div>
+              <div className="truncate text-sm text-slate-600">{clientName(i.client_id)}</div>
+              <div className={`text-xs ${isOverdue(i) ? "font-medium text-red-600" : "text-slate-500"}`}>{t("dueDate")}: {fmtDate(i.due_date, lang)}</div>
+            </div>
+            <div className="shrink-0 text-right font-semibold">{money(i.total, lang, cur)}</div>
+          </Link>
+        ))}
+      </div>
+      <div className="card hidden overflow-x-auto md:block">
         {list.length === 0 ? <Empty /> : (
           <table className="table">
             <thead><tr><th>{t("number")}</th><th>{t("client")}</th><th>{t("issueDate")}</th><th>{t("dueDate")}</th><th>{t("status")}</th><th className="text-right">{t("total")}</th></tr></thead>

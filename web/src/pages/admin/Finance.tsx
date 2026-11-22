@@ -318,7 +318,7 @@ export default function Finance() {
                       {x.pending && <> · <span className="text-amber-600">{t("pending")}</span></>}
                     </div>
                   </button>
-                  <select className="hidden md:block input w-40 py-1 text-xs" value={x.category_id ?? ""} onChange={(e) => setCategory(x.id, e.target.value)}>
+                  <select className="hidden md:block input w-40 py-1 lg:text-xs" value={x.category_id ?? ""} onChange={(e) => setCategory(x.id, e.target.value)}>
                     <option value="">{t("uncategorized")}</option>
                     {cats.filter((c) => c.kind === x.kind).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>

@@ -65,7 +65,17 @@ export default function Clients() {
       <PageHeader title={t("navClients")}>
         <button className="btn-primary" onClick={() => setEditing({})}>+ {t("newClient")}</button>
       </PageHeader>
-      <div className="card overflow-x-auto">
+      <div className="space-y-2 md:hidden">
+        {rows.length === 0 ? <div className="card"><Empty /></div> : rows.map((c) => (
+          <button key={c.id} onClick={() => setEditing(c)} className="card block w-full p-4 text-left">
+            <div className="font-semibold text-slate-900">{c.name}</div>
+            {c.contact_name && <div className="text-sm text-slate-600">{c.contact_name}</div>}
+            <div className="text-sm text-slate-500">{[c.email, c.phone].filter(Boolean).join(" · ")}</div>
+            <div className="text-xs text-slate-400">{[c.city, c.state].filter(Boolean).join(", ")}</div>
+          </button>
+        ))}
+      </div>
+      <div className="card hidden overflow-x-auto md:block">
         {rows.length === 0 ? <Empty /> : (
           <table className="table">
             <thead><tr><th>{t("name")}</th><th>{t("contact")}</th><th>{t("email")}</th><th>{t("phone")}</th><th>{t("city")}</th><th></th></tr></thead>

@@ -239,7 +239,31 @@ export default function Timesheets() {
         <Stat label={t("payrollPaid")} value={money(paidTotal, lang, company?.currency)} tone={paidTotal > 0 ? "good" : "default"} />
         {openCount > 0 && <Stat label={t("open")} value={String(openCount)} sub={t("openShiftWarn")} tone="bad" />}
       </div>
-      <div className="card overflow-x-auto">
+      <div className="space-y-2 md:hidden">
+        {rows.length === 0 ? <div className="card"><Empty /></div> : rows.map((r) => {
+          const pp = paymentOf(r.employee_id);
+          return (
+            <div key={r.employee_id} className="card space-y-3 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-slate-900">{r.full_name}</div>
+                  <div className="text-sm text-slate-500">{Number(r.hours).toFixed(2)} h · {r.shifts} {t("shifts").toLowerCase()} · {money(r.hourly_rate, lang, company?.currency)}/h</div>
+                  {r.open_shifts > 0 && <span className="badge mt-1 bg-amber-100 text-amber-800">{r.open_shifts} {t("open")}</span>}
+                </div>
+                <div className="shrink-0 text-right text-lg font-semibold">{money(r.amount, lang, company?.currency)}</div>
+              </div>
+              {pp && <div className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800">✓ {t("paidOn", { date: fmtDate(pp.paid_at.slice(0, 10), lang) })} · {money(pp.amount, lang, company?.currency)}</div>}
+              <div className="grid grid-cols-2 gap-2">
+                <button className="btn-secondary" onClick={() => setDetail(r)}>{t("details")}</button>
+                {pp
+                  ? <button className="btn-secondary text-slate-500" onClick={() => undo(pp)}>{t("undoPayment")}</button>
+                  : (r.amount > 0 || r.open_shifts > 0) && <button className="btn bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => setPaying(r)}>$ {t("pay")}</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="card hidden overflow-x-auto md:block">
         {rows.length === 0 ? <Empty /> : (
           <table className="table">
             <thead><tr><th>{t("name")}</th><th className="text-right">{t("shifts")}</th><th className="text-right">{t("hours")}</th><th className="text-right">{t("rate")}</th><th className="text-right">{t("toPay")}</th><th></th></tr></thead>

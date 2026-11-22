@@ -151,7 +151,26 @@ export default function Team() {
       <PageHeader title={t("navTeam")}>
         <button className="btn-primary" onClick={() => setCreating(true)}>+ {t("newEmployee")}</button>
       </PageHeader>
-      <div className="card overflow-x-auto">
+      {/* celular: cartões */}
+      <div className="space-y-2 md:hidden">
+        {rows.length === 0 ? <div className="card"><Empty /></div> : rows.map((r) => (
+          <button key={r.id} onClick={() => setEditing(r)} className={`card flex w-full items-center gap-3 p-4 text-left ${r.active ? "" : "opacity-50"}`}>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold text-slate-900">{r.full_name}</div>
+              <div className="truncate text-sm text-slate-500">{r.email}</div>
+              <div className="mt-1 flex flex-wrap gap-1.5 text-xs">
+                <span className="badge bg-slate-100 text-slate-700">{r.role === "developer" ? t("roleDeveloper") : r.role === "admin" ? t("roleAdmin") : t("roleEmployee")}</span>
+                <span className={`badge ${r.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{r.active ? t("active") : t("inactiveLabel")}</span>
+              </div>
+            </div>
+            <div className="shrink-0 text-right">
+              <div className="font-semibold">{money(r.hourly_rate, lang, company?.currency)}</div>
+              <div className="text-xs text-slate-400">/h</div>
+            </div>
+          </button>
+        ))}
+      </div>
+      <div className="card hidden overflow-x-auto md:block">
         {rows.length === 0 ? <Empty /> : (
           <table className="table">
             <thead><tr><th>{t("name")}</th><th>{t("email")}</th><th>{t("phone")}</th><th>{t("role")}</th><th className="text-right">{t("hourlyRate")}</th><th>{t("status")}</th><th></th></tr></thead>

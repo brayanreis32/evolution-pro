@@ -91,15 +91,20 @@ export function PeriodPicker({ value, onChange, mode = "week" }: { value: Period
     ? [[t("weekly"), weekRange()], [t("biweekly"), halfMonthRange()], [t("monthly"), monthRange()], [t("lastMonth"), lastMonth]]
     : [[t("thisMonth"), monthRange()], [t("lastMonth"), lastMonth], [t("halfMonth"), halfMonthRange()], [t("thisWeek"), weekRange()]];
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      {presets.map(([label, p]) => (
-        <button key={label} className={value.start === p.start && value.end === p.end ? "btn-primary" : "btn-secondary"} onClick={() => onChange(p)}>
-          {label}
-        </button>
-      ))}
-      <input type="date" className="input w-auto" value={value.start} onChange={(e) => onChange({ ...value, start: e.target.value })} />
-      <span className="pb-2 text-slate-400">→</span>
-      <input type="date" className="input w-auto" value={value.end} onChange={(e) => onChange({ ...value, end: e.target.value })} />
+    <div className="flex w-full min-w-0 flex-col gap-2 lg:w-auto lg:flex-row lg:flex-wrap lg:items-end">
+      {/* celular: faixa que rola para o lado */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
+        {presets.map(([label, p]) => (
+          <button key={label} className={`shrink-0 rounded-full ${value.start === p.start && value.end === p.end ? "btn-primary" : "btn-secondary"}`} onClick={() => onChange(p)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 lg:flex">
+        <input type="date" className="input min-w-0 px-2 lg:w-auto lg:px-3" value={value.start} onChange={(e) => onChange({ ...value, start: e.target.value })} />
+        <span className="text-slate-400">→</span>
+        <input type="date" className="input min-w-0 px-2 lg:w-auto lg:px-3" value={value.end} onChange={(e) => onChange({ ...value, end: e.target.value })} />
+      </div>
     </div>
   );
 }

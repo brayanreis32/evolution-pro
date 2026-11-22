@@ -77,7 +77,7 @@ export default function Dashboard() {
         {accounts.length > 0 && <Stat label={t("openInvoices")} value={money(openTotal, lang, cur)} sub={overdue.length ? `${overdue.length} ${t("overdue").toLowerCase()}` : undefined} tone={overdue.length ? "bad" : "default"} />}
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         <div className="card p-5">
           <h2 className="mb-3">{t("whoIsWorking")}</h2>
           {working.length === 0 ? <p className="text-sm text-slate-500">{t("nobodyWorking")}</p> : (
@@ -102,10 +102,10 @@ export default function Dashboard() {
           {open.length === 0 ? <Empty /> : (
             <ul className="space-y-2 text-sm">
               {open.slice(0, 6).map((i) => (
-                <li key={i.id} className="flex justify-between">
-                  <Link to={`/invoices/${i.id}`} className="font-medium text-brand-700">{i.number}</Link>
-                  <span className={i.due_date < today() ? "text-red-600" : "text-slate-500"}>{fmtDate(i.due_date, lang)}</span>
-                  <span className="font-semibold">{money(i.total, lang, cur)}</span>
+                <li key={i.id} className="flex items-center justify-between gap-2">
+                  <Link to={`/invoices/${i.id}`} className="shrink-0 font-medium text-brand-700">{i.number}</Link>
+                  <span className={`min-w-0 truncate ${i.due_date < today() ? "text-red-600" : "text-slate-500"}`}>{fmtDate(i.due_date, lang)}</span>
+                  <span className="shrink-0 font-semibold">{money(i.total, lang, cur)}</span>
                 </li>
               ))}
             </ul>
@@ -118,7 +118,7 @@ export default function Dashboard() {
             <ul className="space-y-2 text-sm">
               {recent.map((x) => (
                 <li key={x.id} className="flex justify-between gap-2">
-                  <span className="truncate">{x.description}</span>
+                  <span className="min-w-0 truncate">{x.description}</span>
                   <span className={`shrink-0 font-semibold ${x.kind === "income" ? "text-emerald-600" : "text-red-600"}`}>
                     {x.kind === "income" ? "+" : "−"}{money(x.amount, lang, cur)}
                   </span>
