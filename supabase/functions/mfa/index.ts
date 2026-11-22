@@ -13,8 +13,19 @@ Deno.serve(handler(async (req) => {
 
   if (action === "status") return json({ enrolled: Boolean(row?.verified) });
 
+  // recomeçar o cadastro (novo QR) — só enquanto ainda não foi confirmado
+  if (action === "reset") {
+    if (row?.verified) throw new HttpError(400, "MFA_ALREADY_ENROLLED");
+    await db.rpc("totp_reset", { p_user: userId });
+    return json({ ok: true });
+  }
+
   if (action === "enroll") {
-    if (row?.verified) return json({ enrolled: true });
+    if (row?.verified) {
+      const { data: u0 } = await db.auth.admin.getUserById(userId);
+      const { data: c0 } = await db.from("company_settings").select("name").eq("id", 1).maybeSingle();
+      return json({ enrolled: true, issuer: (c0?.name ?? "Evolution Pro").replace(/[:]/g, ""), account: u0.user?.email ?? "" });
+    }
     if (!row) {
       const secret = base32Encode(crypto.getRandomValues(new Uint8Array(20)));
       await db.rpc("totp_set_secret", { p_user: userId, p_secret: secret });
@@ -23,9 +34,10 @@ Deno.serve(handler(async (req) => {
     const { data: u } = await db.auth.admin.getUserById(userId);
     const { data: company } = await db.from("company_settings").select("name").eq("id", 1).maybeSingle();
     const issuer = (company?.name ?? "Evolution Pro").replace(/[:]/g, "");
+    const account = u.user?.email ?? "user";
     const label = encodeURIComponent(`${issuer}:${u.user?.email ?? "user"}`);
     const uri = `otpauth://totp/${label}?secret=${row.secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
-    return json({ enrolled: false, secret: row.secret, uri });
+    return json({ enrolled: false, secret: row.secret, uri, issuer, account });
   }
 
   if (action === "verify") {
