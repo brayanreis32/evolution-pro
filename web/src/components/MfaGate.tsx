@@ -17,6 +17,8 @@ export default function MfaGate({ onPassed, onClose }: { onPassed: () => void; o
   const [qr, setQr] = useState("");
   const [secret, setSecret] = useState("");
   const [entry, setEntry] = useState("");
+  const [uri, setUri] = useState("");
+  const [copied, setCopied] = useState(false);
   const [code, setCode] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -28,6 +30,7 @@ export default function MfaGate({ onPassed, onClose }: { onPassed: () => void; o
       setEntry(r.issuer ? `${r.issuer} (${r.account})` : "");
       if (r.enrolled) { setMode("verify"); return; }
       setSecret(r.secret ?? "");
+      setUri(r.uri ?? "");
       setQr(await QRCode.toDataURL(r.uri ?? "", { margin: 1, width: 220 }));
       setMode("enroll");
     } catch (e) {
@@ -61,9 +64,21 @@ export default function MfaGate({ onPassed, onClose }: { onPassed: () => void; o
         {mode === "loading" && <p className="text-slate-500">{t("loading")}</p>}
         {mode === "enroll" && (
           <>
+            {/* no celular: abre o app autenticador direto, sem escanear nem digitar */}
+            {uri && (
+              <a href={uri} className="btn-primary w-full lg:hidden">📲 {t("mfaOpenApp")}</a>
+            )}
+            <p className="text-xs text-slate-500 lg:hidden">{t("mfaOpenAppHelp")}</p>
             <p className="text-slate-600">{t("mfaEnrollHelp")}</p>
             {qr && <img src={qr} alt="QR code" className="mx-auto h-52 w-52 rounded-lg border border-slate-200 bg-white p-2" />}
-            <p className="text-center text-xs text-slate-500">{t("mfaManual")} <code className="break-all font-mono text-slate-800">{secret}</code></p>
+            <div className="space-y-2 text-center text-xs text-slate-500">
+              <p>{t("mfaManual")} <code className="break-all font-mono text-slate-800">{secret}</code></p>
+              <button type="button" className="btn-secondary px-3 py-1 text-xs"
+                onClick={async () => { try { await navigator.clipboard.writeText(secret); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignora */ } }}>
+                {copied ? t("copied") : t("copy")}
+              </button>
+              <p>{t("mfaManualType")}</p>
+            </div>
             <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">{t("mfaOldWarn")}</p>
           </>
         )}
