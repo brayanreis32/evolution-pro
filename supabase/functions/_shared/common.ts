@@ -76,9 +76,8 @@ export async function checkTotp(secret: string, code: string, lastStep: number |
 
 /** Exige confirmação em duas etapas recente (15 min) para este usuário. */
 export async function requireMfa(userId: string) {
-  const { data } = await serviceClient().rpc("totp_get", { p_user: userId });
-  const row = (data ?? [])[0];
-  if (row?.verified && row.verified_until && new Date(row.verified_until) > new Date()) return;
+  const { data } = await serviceClient().rpc("mfa_ok", { p_user: userId });
+  if (data === true) return;
   throw new HttpError(403, "MFA_REQUIRED");
 }
 
