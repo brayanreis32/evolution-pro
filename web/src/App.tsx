@@ -4,6 +4,7 @@ import { useI18n } from "./lib/i18n";
 import Layout, { MoreMenu } from "./components/Layout";
 import Splash, { useSplash } from "./components/Splash";
 import Login from "./pages/Login";
+import Privacy from "./pages/Privacy";
 import Dashboard from "./pages/admin/Dashboard";
 import Finance from "./pages/admin/Finance";
 import Invoices from "./pages/admin/Invoices";
@@ -21,6 +22,9 @@ export default function App() {
   const { session, profile, loading, isAdmin, signOut } = useAuth();
   const { t } = useI18n();
   const splash = useSplash(Boolean(session && profile?.active));
+
+  // página pública (sem login)
+  if (typeof window !== "undefined" && /^\/(privacy|privacidade)\/?$/.test(window.location.pathname)) return <Privacy />;
 
   if (loading) return <div className="flex min-h-screen items-center justify-center text-slate-500">{t("loading")}</div>;
   if (!session) return <Login />;
