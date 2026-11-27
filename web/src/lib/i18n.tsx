@@ -67,6 +67,9 @@ const dict = {
   needClient: ["Cadastre um cliente primeiro.", "Add a client first."], saveInvoice: ["Salvar invoice", "Save invoice"],
   paidHint: ["Quando marcado como pago, o valor entra automaticamente no Financeiro.",
     "When marked as paid, the amount is added to Finance automatically."],
+  invoiceNumberAuto: ["Nº automático", "Auto number"],
+  invoiceNumberHelp: ["Pode trocar o número (ex.: para continuar a numeração de outro sistema). Os próximos seguem a partir dele.", "You can change the number (e.g. to continue another system's numbering). Next ones follow from it."],
+  invoiceNumberTaken: ["Já existe um invoice com esse número. Escolha outro.", "An invoice with this number already exists. Pick another."],
   duplicate: ["Duplicar", "Duplicate"], fromHours: ["Puxar horas do período", "Import hours from period"],
 
   // clientes

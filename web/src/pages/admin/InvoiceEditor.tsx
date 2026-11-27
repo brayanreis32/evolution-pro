@@ -72,6 +72,8 @@ export default function InvoiceEditor() {
         client_id: inv.client_id, site_id: inv.site_id || null, job_address: inv.job_address || null, po_number: inv.po_number || null,
         issue_date: inv.issue_date, due_date: inv.due_date || null, language: inv.language, tax_rate: Number(inv.tax_rate || 0),
         discount: Number(inv.discount || 0), notes: inv.notes || null,
+        // número editável (ex.: continuar a numeração de outro sistema); vazio = automático
+        ...(inv.number && inv.number.trim() ? { number: inv.number.trim() } : {}),
       };
       let invoiceId = inv.id;
       if (!invoiceId) {
@@ -98,7 +100,8 @@ export default function InvoiceEditor() {
       if (isNew) nav(`/invoices/${invoiceId}`, { replace: true });
       return invoiceId!;
     } catch (e) {
-      toast.fail((e as Error).message);
+      const msg = (e as Error).message ?? "";
+      toast.fail(/duplicate key|invoices_number_key/i.test(msg) ? t("invoiceNumberTaken") : msg);
       return null;
     } finally {
       setBusy(false);
@@ -137,7 +140,18 @@ export default function InvoiceEditor() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link to="/invoices" className="btn-ghost px-2">←</Link>
-          <h1>{inv.number ?? t("newInvoice")}</h1>
+          {locked
+            ? <h1>{inv.number ?? t("newInvoice")}</h1>
+            : (
+              <input
+                className="input w-44 text-xl font-semibold lg:text-xl"
+                value={inv.number ?? ""}
+                placeholder={t("invoiceNumberAuto")}
+                onChange={(e) => setInv({ ...inv, number: e.target.value })}
+                aria-label={t("number")}
+                title={t("invoiceNumberHelp")}
+              />
+            )}
           {inv.status && <span className={`badge ${statusStyle[inv.status]}`}>{t(`st_${inv.status}`)}</span>}
         </div>
         <div className="flex flex-wrap gap-2">
